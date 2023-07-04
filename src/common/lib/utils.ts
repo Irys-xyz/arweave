@@ -1,4 +1,5 @@
 import * as B64js from "base64-js";
+import BigNumber from "bignumber.js";
 
 export type Base64UrlString = string;
 
@@ -62,4 +63,12 @@ export function b64UrlDecode(b64UrlString: string): string {
   let padding;
   b64UrlString.length % 4 == 0 ? (padding = 0) : (padding = 4 - (b64UrlString.length % 4));
   return b64UrlString.concat("=".repeat(padding));
+}
+
+export function winstonToAr(winston: BigNumber.Value): BigNumber {
+  return new BigNumber(winston).shiftedBy(-12);
+}
+
+export function arToWinston(ar: BigNumber.Value): BigNumber {
+  return new BigNumber(ar).shiftedBy(12);
 }

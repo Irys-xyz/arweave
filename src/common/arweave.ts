@@ -1,5 +1,4 @@
 // import Ar from "./ar";
-import BigNumber from "bignumber.js";
 import Blocks from "./blocks";
 import Chunks from "./chunks";
 import type { ApiConfig } from "./lib/api";
@@ -48,8 +47,6 @@ export abstract class Arweave {
   public network: Network;
 
   public blocks: Blocks;
-
-  // public ar: Ar;
 
   public silo: Silo;
 
@@ -192,14 +189,6 @@ export abstract class Arweave {
     siloTransaction.addTag("Silo-Version", `0.1.0`);
 
     return siloTransaction;
-  }
-
-  public winstonToAr(winston: BigNumber.Value): BigNumber {
-    return new BigNumber(winston).shiftedBy(-12);
-  }
-
-  public arToWinston(ar: BigNumber.Value): BigNumber {
-    return new BigNumber(ar).shiftedBy(12);
   }
 }
 

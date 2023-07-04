@@ -98,7 +98,7 @@ describe("Transactions", function () {
     const transaction = await arweave.createTransaction(
       {
         target: "GRQ7swQO1AMyFgnuAPI7AvGQlW3lzuQuwlJbIpWV7xk",
-        quantity: arweave.arToWinston("1.5").toString(),
+        quantity: arweave.utils.arToWinston("1.5").toString(),
       },
       wallet,
     );
@@ -234,7 +234,7 @@ describe("Transactions", function () {
         format: 2,
         last_tx: "",
         data,
-        reward: arweave.arToWinston("100").toString(),
+        reward: arweave.utils.arToWinston("100").toString(),
       },
       jwk,
     );

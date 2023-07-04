@@ -1,4 +1,8 @@
 import { arweaveInstance } from "./_arweave";
+const blockIndepHash = "zbUPQFA4ybnd8h99KI9Iqh4mogXJibr0syEwuJPrFHhOhld7XBMOUDeXfsIGvYDp";
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const block = require(`./fixtures/block_${blockIndepHash}.json`);
 
 const arweave = arweaveInstance();
 
@@ -29,13 +33,16 @@ describe("Blocks", function () {
   it("should get block's data by its indep_hash", async function () {
     // given
     // https://arweave.net/block/hash/zbUPQFA4ybnd8h99KI9Iqh4mogXJibr0syEwuJPrFHhOhld7XBMOUDeXfsIGvYDp
-    const blockIndepHash = "zbUPQFA4ybnd8h99KI9Iqh4mogXJibr0syEwuJPrFHhOhld7XBMOUDeXfsIGvYDp";
-    const expectedResult = require(`./fixtures/block_${blockIndepHash}.json`);
 
     // when
-    const result = (await arweave.blocks.get(blockIndepHash)) as any; // note: any to be able to access object values by keys.
+    const result = (await arweave.blocks.getByHash(blockIndepHash)) as any; // note: any to be able to access object values by keys.
 
     // then
-    expect(expectedResult).toEqual(result);
+    expect(block).toEqual(result);
+  });
+  it("should get block's data by it's height", async () => {
+    const blockHeight = 711150;
+    const result = await arweave.blocks.getByHeight(blockHeight);
+    expect(result).toEqual(block);
   });
 });

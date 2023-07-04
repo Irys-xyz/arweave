@@ -28,15 +28,29 @@ export type BlockData = {
 };
 
 export default class Blocks {
-  private static readonly ENDPOINT = "block/hash/";
-
   constructor(private readonly api: Api | FallbackApi, private readonly network: Network) {}
 
   /**
    * Gets a block by its "indep_hash"
    */
-  public async get(indepHash: string): Promise<BlockData> {
-    const response = await this.api.get<BlockData>(`${Blocks.ENDPOINT}${indepHash}`);
+  public async getByHash(indepHash: string): Promise<BlockData> {
+    const response = await this.api.get<BlockData>(`block/hash/${indepHash}`);
+    if (response.status === 200) {
+      return response.data;
+    } else {
+      if (response.status === 404) {
+        throw new ArweaveError(ArweaveErrorType.BLOCK_NOT_FOUND);
+      } else {
+        throw new Error(`Error while loading block data: ${response}`);
+      }
+    }
+  }
+
+  /**
+   * Gets a block by its "indep_hash"
+   */
+  public async getByHeight(height: number): Promise<BlockData> {
+    const response = await this.api.get<BlockData>(`block/height/${height}`);
     if (response.status === 200) {
       return response.data;
     } else {
@@ -53,6 +67,6 @@ export default class Blocks {
    */
   public async getCurrent(): Promise<BlockData> {
     const { current } = await this.network.getInfo();
-    return await this.get(current);
+    return await this.getByHash(current);
   }
 }
