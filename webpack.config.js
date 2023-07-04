@@ -16,6 +16,7 @@ config.web = {
     alias: {
       // process: "process/browser",
       crypto: "crypto-browserify",
+      "stream/promises": path.resolve(__dirname, "node_modules/readable-stream/lib/stream/promises.js"),
       stream: "stream-browserify",
       "$/utils": path.resolve(__dirname, "./build/esm/web/utils"),
     },
@@ -50,6 +51,7 @@ config.webprod = {
     alias: {
       // process: "process/browser",
       crypto: "crypto-browserify",
+      "stream/promises": path.resolve(__dirname, "node_modules/readable-stream/lib/stream/promises.js"),
       stream: "stream-browserify",
       "$/utils": path.resolve(__dirname, "./build/esm/web/utils"),
     },
@@ -92,6 +94,7 @@ config.webtests = {
     extensions: [".tsx", ".ts", ".js"],
     alias: {
       // process: "process/browser",
+      "stream/promises": path.resolve(__dirname, "node_modules/readable-stream/lib/stream/promises.js"),
       "$/utils": path.resolve(__dirname, "./build/esm/web/utils"),
     },
     fallback: {
