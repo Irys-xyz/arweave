@@ -8,11 +8,7 @@ const expect = chai.expect;
 // let globals = <any>global;
 
 // @ts-ignore
-const arweave: Arweave = self.Arweave.init({
-  host: "arweave.net",
-  protocol: "https",
-  logging: false,
-});
+const arweave: Arweave = self.Arweave.init({ url: "https://arweave.net" });
 
 // @ts-ignore
 self.arweave = arweave;

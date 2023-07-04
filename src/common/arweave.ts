@@ -32,7 +32,7 @@ export type CreateTransactionInterface = {
 };
 
 export type AbstractConfig = {
-  apiConfig: ApiConfig | ApiConfig[];
+  apiConfig: ApiConfig | ApiConfig[] | string[];
   crypto: CryptoInterface;
 };
 
@@ -60,7 +60,7 @@ export abstract class Arweave {
   public deepHash: DeepHash;
   public crypto: CryptoInterface;
 
-  static VERSION = "REPLACEMEARWEAVEVERSION";
+  public static VERSION = "REPLACEMEARWEAVEVERSION";
 
   constructor(config: AbstractConfig) {
     this.config = config;

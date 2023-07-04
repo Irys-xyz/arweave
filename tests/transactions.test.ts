@@ -44,8 +44,7 @@ describe("Transactions", function () {
 
     expect(verified).toBe(true);
 
-    // @ts-ignore
-    // Needs ts-ignoring as tags are readonly so chaning the tag like this isn't
+    // @ts-expect-error Needs ts-ignoring as tags are readonly so chaning the tag like this isn't
     // normally an allowed operation, but it's a test, so...
     transaction.tags[1].value = "dGVzdDI";
 
@@ -141,8 +140,7 @@ describe("Transactions", function () {
 
     expect(verified).toBe(true);
 
-    // @ts-ignore
-    // Needs ts-ignoring as tags are readonly so chaning the tag like this isn't
+    // @ts-expect-error Needs ts-ignoring as tags are readonly so chaning the tag like this isn't
     // normally an allowed operation, but it's a test, so...
     transaction.tags[1].value = "dGVzdDI";
 

@@ -1,29 +1,15 @@
-import type { ApiConfig } from "common/lib/api";
+import type { ApiConfig } from "../common/lib/api";
 import type { AbstractConfig } from "../common";
 import CommonArweave from "../common";
 import WebCryptoDriver from "./webcrypto-driver";
-import type { InitApiConfig } from "common/types";
-
-// declare global {
-//   interface Window {
-//     IrysArweave: typeof WebArweave;
-//   }
-
-//   // eslint-disable-next-line no-var
-//   var IrysArweave: typeof WebArweave;
-// }
+import type { InitApiConfig } from "../common/types";
 
 export class WebArweave extends CommonArweave {
-  constructor(config: InitApiConfig, opts?: Omit<AbstractConfig, "apiConfig">) {
-    config.url = new URL(config.url ?? "http://arweave.net");
+  constructor(config: InitApiConfig | InitApiConfig[] | string[] | URL[], opts?: Omit<AbstractConfig, "apiConfig">) {
+    if (!Array.isArray(config)) config.url = new URL(config.url ?? "https://arweave.net");
     super({ crypto: opts?.crypto ?? new WebCryptoDriver(), ...opts, apiConfig: config as ApiConfig });
   }
-  public static init: (apiConfig: ApiConfig) => CommonArweave;
+  public static init: (apiConfig: ApiConfig) => WebArweave;
 }
-export default WebArweave;
 
-// if (typeof globalThis === "object") {
-//   globalThis.IrysArweave = WebArweave;
-// } else if (typeof self === "object") {
-//   self.IrysArweave = WebArweave;
-// }
+export default WebArweave;

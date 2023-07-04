@@ -36,5 +36,6 @@
       "module": "CommonJS"
     }
   },
-  "include": ["src/**/*", "scripts/**/*"]
+  "include": ["src/**/*", "scripts/**/*"],
+  "exclude": ["src/web/bundle.ts"]
 }

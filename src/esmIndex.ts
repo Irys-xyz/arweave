@@ -1,5 +1,5 @@
-import { NodeArweave as NA } from "./node";
+import { NodeArweave as Arweave } from "./node";
 export { default as WebArweave } from "./web";
 
-export const NodeArweave = NA;
-export default NodeArweave;
+export const NodeArweave = Arweave;
+export default Arweave;

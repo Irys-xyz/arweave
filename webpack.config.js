@@ -5,7 +5,7 @@ const config = {};
 
 config.web = {
   name: "web",
-  entry: "./build/esm/web/index.js",
+  entry: "./build/esm/web/bundle.js",
   mode: "development",
   target: "web",
   devtool: "inline-source-map",
@@ -35,12 +35,14 @@ config.web = {
   output: {
     filename: "web.bundle.js",
     path: path.resolve(__dirname, "build"),
+    // libraryTarget: "umd",
+    // library: "Arweave",
   },
 };
 
 config.webprod = {
   name: "web-prod",
-  entry: "./build/esm/web/index.js",
+  entry: "./build/esm/web/bundle.js",
   mode: "production",
   target: "web",
   devtool: "source-map",
@@ -74,6 +76,8 @@ config.webprod = {
   output: {
     filename: "web.bundle.min.js",
     path: path.resolve(__dirname, "build"),
+    // libraryTarget: "umd",
+    // library: "Arweave",
   },
 };
 
@@ -119,6 +123,8 @@ config.webtests = {
   output: {
     filename: "webtests.bundle.js",
     path: path.resolve(__dirname, "build"),
+    // libraryTarget: "umd",
+    // library: "Arweave",
   },
 };
 

@@ -7,26 +7,21 @@
   "main": "./build/cjs/cjsIndex.js",
   "browser": "./build/esm/web/index.js",
   "module": "./build/esm/esmIndex.js",
-  "types": "./build/cjs/esmIndex.d.ts",
   "sideEffects": false,
   "exports": {
     "./node": {
       "require": {
-        "types": "./build/cjs/node/index.d.ts",
         "default": "./build/cjs/node/index.js"
       },
       "import": {
-        "types": "./build/esm/node/index.d.ts",
         "default": "./build/esm/node/index.js"
       }
     },
     "./web": {
       "require": {
-        "types": "./build/cjs/web/index.d.ts",
         "default": "./build/cjs/web/index.js"
       },
       "import": {
-        "types": "./build/esm/web/index.d.ts",
         "default": "./build/esm/web/index.js"
       }
     },
@@ -37,11 +32,11 @@
     ".": {
       "browser": "./build/esm/web/index.js",
       "require": {
-        "types": "./build/esm/esmIndex.d.ts",
+        "node": "./build/cjs/node/index.js",
         "default": "./build/cjs/cjsIndex.js"
       },
       "import": {
-        "types": "./build/esm/esmIndex.d.ts",
+        "node": "./build/esm/node/index.js",
         "default": "./build/esm/esmIndex.js"
       }
     },
@@ -87,6 +82,7 @@
     "prettier": "^2.8.8",
     "readable-stream": "^4.4.2",
     "resolve-tspaths": "^0.8.13",
+    "resolve.exports": "^2.0.2",
     "stream-browserify": "^3.0.0",
     "terser-webpack-plugin": "^5.3.9",
     "ts-jest": "^29.1.0",

@@ -10,7 +10,7 @@ type FallbackApiRequestConfig = {
   };
 } & ApiRequestConfig;
 
-const isApiConfig = (o: URL | ApiConfig): o is ApiConfig => Object.hasOwn(o, "url");
+const isApiConfig = (o: URL | ApiConfig | string): o is ApiConfig => typeof o !== "string" && Object.hasOwn(o, "url");
 
 const defaultFallbackConfig = {
   maxAttempts: 5,
@@ -23,14 +23,14 @@ export class FallbackApi extends Api {
   protected instances!: Api[];
   protected globalConfig: Omit<ApiConfig, "url">;
 
-  constructor(hosts: ApiConfig[] | URL[], opts?: { globalConfig?: Omit<ApiConfig, "url"> }) {
-    super({ url: new URL("https://irys.xyz") });
+  constructor(hosts: ApiConfig[] | URL[] | string[], opts?: { globalConfig?: Omit<ApiConfig, "url"> }) {
+    super();
     this.globalConfig = opts?.globalConfig ?? {};
     this.hosts = hosts;
   }
 
-  set hosts(hosts: ApiConfig[] | URL[]) {
-    this.instances = hosts.map((v) => new Api(isApiConfig(v) ? (v as ApiConfig) : { url: v, ...this.globalConfig }));
+  set hosts(hosts: ApiConfig[] | URL[] | string[]) {
+    this.instances = hosts.map((v) => new Api(isApiConfig(v) ? (v as ApiConfig) : { url: new URL(v), ...this.globalConfig }));
   }
 
   protected setInstanceVars(instance: Api): void {
@@ -60,6 +60,7 @@ export class FallbackApi extends Api {
         return await instance({ ...config, url: new URL(endpoint, config.config.url).toString() });
       } catch (e: any) {
         onFallback?.(e, config);
+        if (attempts >= maxAttempts) throw e;
       }
     } while (attempts++ < maxAttempts);
     // make TS happy

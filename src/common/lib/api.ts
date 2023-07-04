@@ -23,8 +23,8 @@ export default class Api {
 
   public config!: ApiConfig;
 
-  constructor(config: ApiConfig) {
-    this.applyConfig(config);
+  constructor(config?: ApiConfig) {
+    if (config) this.applyConfig(config);
   }
 
   public applyConfig(config: ApiConfig): void {
@@ -55,7 +55,7 @@ export default class Api {
       logging: config.logging ?? false,
       logger: config.logger ?? console.log,
       headers: { ...config.headers, "x-irys-arweave-version": Arweave.VERSION },
-      withCredentials: config.withCredentials ?? true,
+      withCredentials: config.withCredentials ?? false,
       retry: { retries: 3, maxTimeout: 5_000 },
     };
   }
