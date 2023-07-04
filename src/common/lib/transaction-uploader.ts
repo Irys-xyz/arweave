@@ -1,8 +1,13 @@
 import Transaction from "./transaction";
-import * as ArweaveUtils from "./utils";
+// import * as ArweaveUtils from "./utils";
 import type Api from "./api";
 import { getError } from "./error";
-import { validatePath } from "./merkle";
+import { b64UrlToBuffer } from "./utils";
+import type FallbackApi from "./fallbackApi";
+import type CryptoInterface from "./crypto/crypto-interface";
+import type Merkle from "./merkle";
+import type { DeepHash } from "./deepHash";
+// import { validatePath } from "./merkle";
 
 // Maximum amount of chunks we will upload in the body.
 const MAX_CHUNKS_IN_BODY = 1;
@@ -15,7 +20,7 @@ const MAX_CHUNKS_IN_BODY = 1;
 // We also try again after any kind of unexpected network errors
 
 // Errors from /chunk we should never try and continue on.
-const FATAL_CHUNK_UPLOAD_ERRORS = [
+export const FATAL_CHUNK_UPLOAD_ERRORS = [
   "invalid_json",
   "chunk_too_big",
   "data_path_too_big",
@@ -64,16 +69,34 @@ export class TransactionUploader {
     return Math.trunc((this.uploadedChunks / this.totalChunks) * 100);
   }
 
-  constructor(private api: Api, transaction: Transaction) {
+  protected crypto: CryptoInterface;
+  protected api: Api | FallbackApi;
+  protected merkle: Merkle;
+  protected deepHash: DeepHash;
+
+  constructor({
+    deps,
+    transaction,
+  }: {
+    deps: { crypto: CryptoInterface; api: Api | FallbackApi; merkle: Merkle; deepHash: DeepHash };
+    transaction: Transaction;
+  }) {
     if (!transaction.id) {
       throw new Error(`Transaction is not signed`);
     }
     if (!transaction.chunks) {
       throw new Error(`Transaction chunks not prepared`);
     }
+    this.api = deps.api;
+    this.crypto = deps.crypto;
+    this.merkle = deps.merkle;
+    this.deepHash = deps.deepHash;
     // Make a copy of transaction, zeroing the data so we can serialize.
     this.data = transaction.data;
-    this.transaction = new Transaction(Object.assign({}, transaction, { data: new Uint8Array(0) }));
+    this.transaction = new Transaction({
+      attributes: Object.assign({}, transaction, { data: new Uint8Array(0) }),
+      deps: { merkle: deps.merkle, deepHash: deps.deepHash },
+    });
   }
 
   /**
@@ -120,12 +143,12 @@ export class TransactionUploader {
 
     const chunk = this.transaction.getChunk(chunkIndex_ || this.chunkIndex, this.data);
 
-    const chunkOk = await validatePath(
+    const chunkOk = await this.merkle.validatePath(
       this.transaction.chunks!.data_root,
       parseInt(chunk.offset),
       0,
       parseInt(chunk.data_size),
-      ArweaveUtils.b64UrlToBuffer(chunk.data_path),
+      b64UrlToBuffer(chunk.data_path),
     );
     if (!chunkOk) {
       throw new Error(`Unable to validate chunk ${this.chunkIndex}`);
@@ -157,7 +180,15 @@ export class TransactionUploader {
    * @param serialized
    * @param data
    */
-  public static async fromSerialized(api: Api, serialized: SerializedUploader, data: Uint8Array): Promise<TransactionUploader> {
+  public static async fromSerialized({
+    serialized,
+    data,
+    deps,
+  }: {
+    serialized: SerializedUploader;
+    data: Uint8Array;
+    deps: { api: Api | FallbackApi; merkle: Merkle; crypto: CryptoInterface; deepHash: DeepHash };
+  }): Promise<TransactionUploader> {
     if (!serialized || typeof serialized.chunkIndex !== "number" || typeof serialized.transaction !== "object") {
       throw new Error(`Serialized object does not match expected format.`);
     }
@@ -169,7 +200,10 @@ export class TransactionUploader {
       await transaction.prepareChunks(data);
     }
 
-    const upload = new TransactionUploader(api, transaction);
+    const upload = new TransactionUploader({
+      deps,
+      transaction,
+    });
 
     // Copy the serialized upload information, and data passed in.
     upload.chunkIndex = serialized.chunkIndex;
@@ -193,7 +227,7 @@ export class TransactionUploader {
    * @param id
    * @param data
    */
-  public static async fromTransactionId(api: Api, id: string): Promise<SerializedUploader> {
+  public static async fromTransactionId(api: Api | FallbackApi, id: string): Promise<SerializedUploader> {
     const resp = await api.get(`tx/${id}`);
 
     if (resp.status !== 200) {
@@ -215,7 +249,14 @@ export class TransactionUploader {
     return serialized;
   }
 
-  public toJSON() {
+  public toJSON(): {
+    chunkIndex: number;
+    transaction: Transaction;
+    lastRequestTimeEnd: number;
+    lastResponseStatus: number;
+    lastResponseError: string;
+    txPosted: boolean;
+  } {
     return {
       chunkIndex: this.chunkIndex,
       transaction: this.transaction,

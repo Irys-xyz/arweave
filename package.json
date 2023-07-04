@@ -1,21 +1,70 @@
 {
   "name": "@irys/arweave",
   "version": "0.0.1",
-  "main": "index.js",
   "repository": "https://github.com/Bundlr-Network/arweave",
   "author": "JesseTheRobot <jesse@bundlr.network>",
   "license": "MIT",
+  "main": "./build/cjs/cjsIndex.js",
+  "browser": "./build/esm/web/index.js",
+  "module": "./build/esm/esmIndex.js",
+  "types": "./build/cjs/esmIndex.d.ts",
+  "sideEffects": false,
+  "exports": {
+    "./node": {
+      "require": {
+        "types": "./build/cjs/node/index.d.ts",
+        "default": "./build/cjs/node/index.js"
+      },
+      "import": {
+        "types": "./build/esm/node/index.d.ts",
+        "default": "./build/esm/node/index.js"
+      }
+    },
+    "./web": {
+      "require": {
+        "types": "./build/cjs/web/index.d.ts",
+        "default": "./build/cjs/web/index.js"
+      },
+      "import": {
+        "types": "./build/esm/web/index.d.ts",
+        "default": "./build/esm/web/index.js"
+      }
+    },
+    "./bundle": {
+      "types": "./build/esm/esmIndex.d.ts",
+      "default": "./build/bundle.js"
+    },
+    ".": {
+      "browser": "./build/esm/web/index.js",
+      "require": {
+        "types": "./build/esm/esmIndex.d.ts",
+        "default": "./build/cjs/cjsIndex.js"
+      },
+      "import": {
+        "types": "./build/esm/esmIndex.d.ts",
+        "default": "./build/esm/esmIndex.js"
+      }
+    },
+    "./*": {
+      "types": "./*.d.ts",
+      "default": "./*.js"
+    }
+  },
+  "files": [
+    "build/**/*"
+  ],
   "scripts": {
     "lint": "eslint ./src -c ./.eslintrc.json --ext .ts,.tsx",
     "lint:fix": "eslint ./src -c ./.eslintrc.json --ext .ts,.tsx --fix",
     "watch": "tsc --watch -p tsconfig.json",
     "test": "jest",
     "clean": "rm -rf ./build",
-    "dev:build": "npm run clean && concurrently \" yarn tsc -p cjs.tsconfig.json && sh ./scripts/fix-pkg.sh cjs commonjs \"  \" yarn tsc -p esm.tsconfig.json && sh ./scripts/fix-pkg.sh esm module && yarn tsc-esm-fix --tsconfig esm.tsconfig.json  \"",
+    "dev:build": "npm run clean && concurrently \" yarn tsc -p cjs.tsconfig.json && sh ./scripts/fix-pkg.sh cjs commonjs \"  \" yarn tsc -p esm.tsconfig.json && sh ./scripts/fix-pkg.sh esm module && yarn tsc-esm-fix --tsconfig esm.tsconfig.json  \" ",
     "bundle:web": "npx webpack --config-name web",
     "bundle:web:test": "npx webpack --config-name web-tests",
     "bundle:web:prod": "npx webpack --config-name web-prod",
-    "web:test": "concurrently \"npm run bundle:web\" \"npm run bundle:web:test\" && opener ./tests/web/web.html"
+    "web:test": "concurrently \"npm run bundle:web\" \"npm run bundle:web:test\" && opener ./tests/web/web.html",
+    "prod:build": "npm run dev:build && npm run bundle:web:prod && ts-node scripts/embedVersion.ts"
   },
   "devDependencies": {
     "@types/async-retry": "^1.4.5",

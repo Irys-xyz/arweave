@@ -41,7 +41,7 @@ export default class Silo {
     return this.crypto.decrypt(encrypted, resource.getEncryptionKey());
   }
 
-  public async readTransactionData(transaction: Transaction, siloURI: string) {
+  public async readTransactionData(transaction: Transaction, siloURI: string): Promise<Uint8Array> {
     if (!siloURI) {
       throw new Error(`No Silo URI specified`);
     }

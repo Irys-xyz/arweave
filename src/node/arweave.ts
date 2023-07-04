@@ -1,8 +1,13 @@
-import Arweave from "../common";
+import CommonArweave from "../common";
 import type { ApiConfig } from "../common/lib/api";
+import NodeCryptoDriver from "./node-driver";
 
-Arweave.init = function (apiConfig: ApiConfig = {}): Arweave {
-  return new Arweave(apiConfig);
-};
+export class NodeArweave extends CommonArweave {
+  constructor(config: { url: string | URL }) {
+    const url = new URL(config.url);
+    super({ crypto: new NodeCryptoDriver(), apiConfig: { url } });
+  }
+  public static init: (apiConfig: ApiConfig) => CommonArweave;
+}
 
-export = Arweave;
+export default NodeArweave;

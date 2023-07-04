@@ -1,74 +1,74 @@
-import { BigNumber } from "bignumber.js";
+// import { BigNumber } from "bignumber.js";
 
-export default class Ar {
-  /**
-   * Method to take a string value and return a bignumber object.
-   *
-   * @protected
-   * @type {Function}
-   * @memberof Arweave
-   */
-  protected readonly BigNum: Function;
+// export default class Ar {
+//   /**
+//    * Method to take a string value and return a bignumber object.
+//    *
+//    * @protected
+//    * @type {Function}
+//    * @memberof Arweave
+//    */
+//   protected readonly BigNum: Function;
 
-  constructor() {
-    // Configure and assign the constructor function for the bignumber library.
-    this.BigNum = (value: string, decimals: number): BigNumber => {
-      const instance = BigNumber.clone({ DECIMAL_PLACES: decimals });
-      return new instance(value);
-    };
-  }
+//   constructor() {
+//     // Configure and assign the constructor function for the bignumber library.
+//     this.BigNum = (value: string, decimals: number): BigNumber => {
+//       const instance = BigNumber.clone({ DECIMAL_PLACES: decimals });
+//       return new instance(value);
+//     };
+//   }
 
-  public winstonToAr(winstonString: string, { formatted = false, decimals = 12 } = {}) {
-    const number = this.stringToBigNum(winstonString, decimals).shiftedBy(-12);
+//   public winstonToAr(winstonString: string, { formatted = false, decimals = 12 } = {}) {
+//     const number = this.stringToBigNum(winstonString, decimals).shiftedBy(-12);
 
-    return formatted ? number.toFormat(decimals) : number.toFixed(decimals);
-  }
+//     return formatted ? number.toFormat(decimals) : number.toFixed(decimals);
+//   }
 
-  public arToWinston(arString: string, { formatted = false } = {}) {
-    const number = this.stringToBigNum(arString).shiftedBy(12);
+//   public arToWinston(arString: string, { formatted = false } = {}) {
+//     const number = this.stringToBigNum(arString).shiftedBy(12);
 
-    return formatted ? number.toFormat() : number.toFixed(0);
-  }
+//     return formatted ? number.toFormat() : number.toFixed(0);
+//   }
 
-  public compare(winstonStringA: string, winstonStringB: string): number {
-    const a = this.stringToBigNum(winstonStringA);
-    const b = this.stringToBigNum(winstonStringB);
+//   public compare(winstonStringA: string, winstonStringB: string): number {
+//     const a = this.stringToBigNum(winstonStringA);
+//     const b = this.stringToBigNum(winstonStringB);
 
-    return a.comparedTo(b);
-  }
+//     return a.comparedTo(b);
+//   }
 
-  public isEqual(winstonStringA: string, winstonStringB: string): boolean {
-    return this.compare(winstonStringA, winstonStringB) === 0;
-  }
+//   public isEqual(winstonStringA: string, winstonStringB: string): boolean {
+//     return this.compare(winstonStringA, winstonStringB) === 0;
+//   }
 
-  public isLessThan(winstonStringA: string, winstonStringB: string): boolean {
-    const a = this.stringToBigNum(winstonStringA);
-    const b = this.stringToBigNum(winstonStringB);
+//   public isLessThan(winstonStringA: string, winstonStringB: string): boolean {
+//     const a = this.stringToBigNum(winstonStringA);
+//     const b = this.stringToBigNum(winstonStringB);
 
-    return a.isLessThan(b);
-  }
+//     return a.isLessThan(b);
+//   }
 
-  public isGreaterThan(winstonStringA: string, winstonStringB: string): boolean {
-    const a = this.stringToBigNum(winstonStringA);
-    const b = this.stringToBigNum(winstonStringB);
+//   public isGreaterThan(winstonStringA: string, winstonStringB: string): boolean {
+//     const a = this.stringToBigNum(winstonStringA);
+//     const b = this.stringToBigNum(winstonStringB);
 
-    return a.isGreaterThan(b);
-  }
+//     return a.isGreaterThan(b);
+//   }
 
-  public add(winstonStringA: string, winstonStringB: string): string {
-    const a = this.stringToBigNum(winstonStringA);
-    // const b = this.stringToBigNum(winstonStringB);
+//   public add(winstonStringA: string, winstonStringB: string): string {
+//     const a = this.stringToBigNum(winstonStringA);
+//     // const b = this.stringToBigNum(winstonStringB);
 
-    return a.plus(winstonStringB).toFixed(0);
-  }
+//     return a.plus(winstonStringB).toFixed(0);
+//   }
 
-  public sub(winstonStringA: string, winstonStringB: string): string {
-    const a = this.stringToBigNum(winstonStringA);
-    // const b = this.stringToBigNum(winstonStringB);
-    return a.minus(winstonStringB).toFixed(0);
-  }
+//   public sub(winstonStringA: string, winstonStringB: string): string {
+//     const a = this.stringToBigNum(winstonStringA);
+//     // const b = this.stringToBigNum(winstonStringB);
+//     return a.minus(winstonStringB).toFixed(0);
+//   }
 
-  private stringToBigNum(stringValue: string, decimalPlaces = 12): BigNumber {
-    return this.BigNum(stringValue, decimalPlaces);
-  }
-}
+//   private stringToBigNum(stringValue: string, decimalPlaces = 12): BigNumber {
+//     return this.BigNum(stringValue, decimalPlaces);
+//   }
+// }

@@ -10,6 +10,9 @@ import { TransactionUploader } from "./lib/transaction-uploader";
 import type Chunks from "./chunks";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type * as _ from "arconnect";
+import type FallbackApi from "./lib/fallbackApi";
+import type Merkle from "./lib/merkle";
+import type { DeepHash } from "./lib/deepHash";
 declare const arweaveWallet: Window["arweaveWallet"];
 
 export type TransactionConfirmedData = {
@@ -23,16 +26,35 @@ export type TransactionStatusResponse = {
 };
 
 export default class Transactions {
-  private api: Api;
+  private api: Api | FallbackApi;
 
   private crypto: CryptoInterface;
 
   private chunks: Chunks;
+  protected merkle: Merkle;
+  protected deepHash: DeepHash;
 
-  constructor(api: Api, crypto: CryptoInterface, chunks: Chunks) {
-    this.api = api;
-    this.crypto = crypto;
-    this.chunks = chunks;
+  constructor({ deps }: { deps: { crypto: CryptoInterface; api: Api | FallbackApi; chunks: Chunks; merkle: Merkle; deepHash: DeepHash } }) {
+    this.api = deps.api;
+    this.crypto = deps.crypto;
+    this.chunks = deps.chunks;
+    this.merkle = deps.merkle;
+    this.deepHash = deps.deepHash;
+  }
+  // TODO: remove
+  public async search(tagName: string, tagValue: string): Promise<string[]> {
+    return this.api
+      .post(`arql`, {
+        op: "equals",
+        expr1: tagName,
+        expr2: tagValue,
+      })
+      .then((response) => {
+        if (!response.data) {
+          return [];
+        }
+        return response.data;
+      });
   }
 
   public getTransactionAnchor(): Promise<string> {
@@ -101,22 +123,7 @@ export default class Transactions {
   }
 
   public fromRaw(attributes: object): Transaction {
-    return new Transaction(attributes);
-  }
-
-  public async search(tagName: string, tagValue: string): Promise<string[]> {
-    return this.api
-      .post(`arql`, {
-        op: "equals",
-        expr1: tagName,
-        expr2: tagValue,
-      })
-      .then((response) => {
-        if (!response.data) {
-          return [];
-        }
-        return response.data;
-      });
+    return new Transaction({ attributes, deps: { merkle: this.merkle, deepHash: this.deepHash } });
   }
 
   public getStatus(id: string): Promise<TransactionStatusResponse> {
@@ -254,7 +261,7 @@ export default class Transactions {
     } else if (typeof (transaction as any).readInt32BE === "function") {
       transaction = new Transaction(JSON.parse(transaction.toString()));
     } else if (typeof transaction === "object" && !(transaction instanceof Transaction)) {
-      transaction = new Transaction(transaction as object);
+      transaction = new Transaction({ attributes: transaction as object, deps: { merkle: this.merkle, deepHash: this.deepHash } });
     }
 
     if (!(transaction instanceof Transaction)) {
@@ -309,7 +316,7 @@ export default class Transactions {
    * @param upload a Transaction object, a previously save progress object, or a transaction id.
    * @param data the data of the transaction. Required when resuming an upload.
    */
-  public async getUploader(upload: Transaction | SerializedUploader | string, data?: Uint8Array | ArrayBuffer) {
+  public async getUploader(upload: Transaction | SerializedUploader | string, data?: Uint8Array | ArrayBuffer): Promise<TransactionUploader> {
     let uploader!: TransactionUploader;
 
     if (data instanceof ArrayBuffer) {
@@ -329,7 +336,10 @@ export default class Transactions {
         await upload.prepareChunks(data);
       }
 
-      uploader = new TransactionUploader(this.api, upload);
+      uploader = new TransactionUploader({
+        transaction: upload,
+        deps: { api: this.api, crypto: this.crypto, merkle: this.merkle, deepHash: this.deepHash },
+      });
 
       if (!uploader.data || uploader.data.length === 0) {
         uploader.data = data;
@@ -344,7 +354,11 @@ export default class Transactions {
       }
 
       // upload should be a serialized upload.
-      uploader = await TransactionUploader.fromSerialized(this.api, upload, data);
+      uploader = await TransactionUploader.fromSerialized({
+        deps: { api: this.api, merkle: this.merkle, crypto: this.crypto, deepHash: this.deepHash },
+        serialized: upload,
+        data,
+      });
     }
 
     return uploader;
@@ -364,7 +378,10 @@ export default class Transactions {
    * @param upload a Transaction object, a previously save uploader, or a transaction id.
    * @param data the data of the transaction. Required when resuming an upload.
    */
-  public async *upload(upload: Transaction | SerializedUploader | string, data: Uint8Array) {
+  public async *upload(
+    upload: Transaction | SerializedUploader | string,
+    data: Uint8Array,
+  ): AsyncGenerator<TransactionUploader, TransactionUploader> {
     const uploader = await this.getUploader(upload, data);
 
     while (!uploader.isComplete) {

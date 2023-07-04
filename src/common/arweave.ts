@@ -1,8 +1,7 @@
-import Ar from "./ar";
+// import Ar from "./ar";
 import type { ApiConfig } from "./lib/api";
 import Api from "./lib/api";
 import type CryptoInterface from "./lib/crypto/crypto-interface";
-import { CryptoDriver } from "$/utils";
 import Network from "./network";
 import Transactions from "./transactions";
 import Wallets from "./wallets";
@@ -13,11 +12,11 @@ import * as ArweaveUtils from "./lib/utils";
 import Silo from "./silo";
 import Chunks from "./chunks";
 import Blocks from "./blocks";
-
-export type Config = {
-  api: ApiConfig;
-  crypto: CryptoInterface;
-};
+import { Stream } from "./lib/stream";
+import type FallbackApi from "./lib/fallbackApi";
+import Merkle from "./lib/merkle";
+import { DeepHash } from "./lib/deepHash";
+import { stringToBuffer, concatBuffers } from "./lib/utils";
 
 export type CreateTransactionInterface = {
   format: number;
@@ -32,8 +31,14 @@ export type CreateTransactionInterface = {
   reward: string;
 };
 
-export class Arweave {
-  public api: Api;
+export type AbstractConfig = {
+  apiConfig: ApiConfig;
+  crypto: CryptoInterface;
+};
+
+export abstract class Arweave {
+  protected config: AbstractConfig;
+  public api: Api | FallbackApi;
 
   public wallets: Wallets;
 
@@ -43,44 +48,49 @@ export class Arweave {
 
   public blocks: Blocks;
 
-  public ar: Ar;
+  // public ar: Ar;
 
   public silo: Silo;
 
   public chunks: Chunks;
+  public merkle: Merkle;
 
   public static init: (apiConfig: ApiConfig) => Arweave;
 
-  public static crypto: CryptoInterface = new CryptoDriver();
-
   public static utils = ArweaveUtils;
+  public stream: Stream;
+  public deepHash: DeepHash;
 
-  constructor(apiConfig: ApiConfig) {
-    this.api = new Api(apiConfig);
-    this.wallets = new Wallets(this.api, Arweave.crypto);
+  static VERSION = "REPLACEMEARWEAVEVERSION";
+
+  constructor(config: AbstractConfig) {
+    this.config = config;
+    this.api = new Api(config.apiConfig);
+    this.wallets = new Wallets(this.api, config.crypto);
     this.chunks = new Chunks(this.api);
-    this.transactions = new Transactions(this.api, Arweave.crypto, this.chunks);
-    this.silo = new Silo(/* this.api, */ this.crypto, this.transactions);
     this.network = new Network(this.api);
     this.blocks = new Blocks(this.api, this.network);
-    this.ar = new Ar();
+    this.merkle = new Merkle({ deps: { crypto: this.crypto } });
+    this.deepHash = new DeepHash({ deps: { utils: { stringToBuffer, concatBuffers }, crypto: config.crypto } });
+    this.transactions = new Transactions({
+      deps: { api: this.api, crypto: config.crypto, chunks: this.chunks, merkle: this.merkle, deepHash: this.deepHash },
+    });
+    this.silo = new Silo(/* this.api, */ this.crypto, this.transactions);
+    this.stream = new Stream({
+      deps: { crypto: this.crypto, api: this.api, merkle: this.merkle, transactions: this.transactions, deepHash: this.deepHash },
+    });
+    // this.ar = new Ar();
   }
 
-  /** @deprecated */
   public get crypto(): CryptoInterface {
-    return Arweave.crypto;
+    return this.crypto;
   }
-
-  /** @deprecated */
   public get utils(): typeof ArweaveUtils {
     return Arweave.utils;
   }
 
-  public getConfig(): Config {
-    return {
-      api: this.api.getConfig(),
-      crypto: null!,
-    };
+  public getConfig(): AbstractConfig {
+    return this.config;
   }
 
   public async createTransaction(attributes: Partial<CreateTransactionInterface>, jwk?: JWKInterface | "use_wallet"): Promise<Transaction> {
@@ -124,7 +134,10 @@ export class Arweave {
     transaction.data_size = attributes.data ? attributes.data.byteLength.toString() : "0";
     transaction.data = attributes.data || new Uint8Array(0);
 
-    const createdTransaction = new Transaction(transaction as TransactionInterface);
+    const createdTransaction = new Transaction({
+      attributes: transaction as TransactionInterface,
+      deps: { merkle: this.merkle, deepHash: this.deepHash },
+    });
     await createdTransaction.getSignatureData();
     return createdTransaction;
   }
@@ -171,16 +184,15 @@ export class Arweave {
       transaction.data = ArweaveUtils.bufferTob64Url(encrypted);
     }
 
-    const siloTransaction = new Transaction(transaction as TransactionInterface);
+    const siloTransaction = new Transaction({
+      attributes: transaction as TransactionInterface,
+      deps: { merkle: this.merkle, deepHash: this.deepHash },
+    });
 
     siloTransaction.addTag("Silo-Name", siloResource.getAccessKey());
     siloTransaction.addTag("Silo-Version", `0.1.0`);
 
     return siloTransaction;
-  }
-
-  public arql(query: object): Promise<string[]> {
-    return this.api.post("/arql", query).then((response) => response.data || []);
   }
 }
 

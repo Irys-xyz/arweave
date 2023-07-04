@@ -1,8 +1,10 @@
 import type Api from "./lib/api";
 import ArweaveError, { ArweaveErrorType } from "./lib/error";
 import type { Tag } from "./lib/transaction";
-import "arconnect";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type * as _ from "arconnect";
 import type Network from "./network";
+import type FallbackApi from "./lib/fallbackApi";
 
 export type BlockData = {
   nonce: string;
@@ -28,7 +30,7 @@ export type BlockData = {
 export default class Blocks {
   private static readonly ENDPOINT = "block/hash/";
 
-  constructor(private readonly api: Api, private readonly network: Network) {}
+  constructor(private readonly api: Api | FallbackApi, private readonly network: Network) {}
 
   /**
    * Gets a block by its "indep_hash"

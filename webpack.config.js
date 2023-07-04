@@ -42,6 +42,7 @@ config.webprod = {
   entry: "./build/esm/web/index.js",
   mode: "production",
   target: "web",
+  devtool: "source-map",
   devServer: {
     contentBase: "./dist",
   },
