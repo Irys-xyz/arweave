@@ -1,34 +1,31 @@
-import Arweave from "../src/common/arweave";
+import Arweave from "../src/node";
+import type { InitApiConfig } from "../src/common/types";
 import NodeCryptoDriver from "../src/node/node-driver";
-import type { ApiConfig } from "../src/common/lib/api";
 
-Arweave.crypto = new NodeCryptoDriver();
+// Arweave.crypto = new NodeCryptoDriver();
 
-export function initInstance(config: ApiConfig) {
-  return new Arweave(config);
+export function initInstance(config: InitApiConfig): Arweave {
+  return new Arweave(config, { crypto: new NodeCryptoDriver() });
 }
 
 export const defaultInstance = initInstance({
-  host: "arweave.net",
-  protocol: "https",
-  port: 443,
+  url: "https://arweave.net",
   logging: false,
   timeout: 30000,
 });
 
-export function arweaveInstance() {
+export function arweaveInstance(): Arweave {
   return defaultInstance;
 }
 
-export function arweaveInstanceDirectNode() {
+export function arweaveInstanceDirectNode(): Arweave {
   console.log(`in function ${arweaveInstanceDirectNode.name} : 'arweave.net' is not a direct node`);
   return initInstance({
-    host: "arweave.net",
-    protocol: "https",
-    port: 443,
+    url: "https://arweave.net",
     logging: false,
     timeout: 15000,
   });
 }
 
 export default defaultInstance;
+export const arweave = defaultInstance;

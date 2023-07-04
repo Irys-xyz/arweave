@@ -1,22 +1,23 @@
 // import Ar from "./ar";
+import BigNumber from "bignumber.js";
+import Blocks from "./blocks";
+import Chunks from "./chunks";
 import type { ApiConfig } from "./lib/api";
 import Api from "./lib/api";
 import type CryptoInterface from "./lib/crypto/crypto-interface";
+import { DeepHash } from "./lib/deepHash";
+import FallbackApi from "./lib/fallbackApi";
+import Merkle from "./lib/merkle";
+import { Stream } from "./lib/stream";
+import type { Tag, TransactionInterface } from "./lib/transaction";
+import Transaction from "./lib/transaction";
+import * as ArweaveUtils from "./lib/utils";
+import { concatBuffers, stringToBuffer } from "./lib/utils";
+import type { JWKInterface } from "./lib/wallet";
 import Network from "./network";
+import Silo from "./silo";
 import Transactions from "./transactions";
 import Wallets from "./wallets";
-import type { TransactionInterface, Tag } from "./lib/transaction";
-import Transaction from "./lib/transaction";
-import type { JWKInterface } from "./lib/wallet";
-import * as ArweaveUtils from "./lib/utils";
-import Silo from "./silo";
-import Chunks from "./chunks";
-import Blocks from "./blocks";
-import { Stream } from "./lib/stream";
-import type FallbackApi from "./lib/fallbackApi";
-import Merkle from "./lib/merkle";
-import { DeepHash } from "./lib/deepHash";
-import { stringToBuffer, concatBuffers } from "./lib/utils";
 
 export type CreateTransactionInterface = {
   format: number;
@@ -32,7 +33,7 @@ export type CreateTransactionInterface = {
 };
 
 export type AbstractConfig = {
-  apiConfig: ApiConfig;
+  apiConfig: ApiConfig | ApiConfig[];
   crypto: CryptoInterface;
 };
 
@@ -60,12 +61,14 @@ export abstract class Arweave {
   public static utils = ArweaveUtils;
   public stream: Stream;
   public deepHash: DeepHash;
+  public crypto: CryptoInterface;
 
   static VERSION = "REPLACEMEARWEAVEVERSION";
 
   constructor(config: AbstractConfig) {
     this.config = config;
-    this.api = new Api(config.apiConfig);
+    this.crypto = config.crypto;
+    this.api = Array.isArray(config.apiConfig) ? new FallbackApi(config.apiConfig) : new Api(config.apiConfig);
     this.wallets = new Wallets(this.api, config.crypto);
     this.chunks = new Chunks(this.api);
     this.network = new Network(this.api);
@@ -75,16 +78,12 @@ export abstract class Arweave {
     this.transactions = new Transactions({
       deps: { api: this.api, crypto: config.crypto, chunks: this.chunks, merkle: this.merkle, deepHash: this.deepHash },
     });
-    this.silo = new Silo(/* this.api, */ this.crypto, this.transactions);
+    this.silo = new Silo(this.crypto, this.transactions);
     this.stream = new Stream({
       deps: { crypto: this.crypto, api: this.api, merkle: this.merkle, transactions: this.transactions, deepHash: this.deepHash },
     });
-    // this.ar = new Ar();
   }
 
-  public get crypto(): CryptoInterface {
-    return this.crypto;
-  }
   public get utils(): typeof ArweaveUtils {
     return Arweave.utils;
   }
@@ -193,6 +192,14 @@ export abstract class Arweave {
     siloTransaction.addTag("Silo-Version", `0.1.0`);
 
     return siloTransaction;
+  }
+
+  public winstonToAr(winston: BigNumber.Value): BigNumber {
+    return new BigNumber(winston).shiftedBy(-12);
+  }
+
+  public arToWinston(ar: BigNumber.Value): BigNumber {
+    return new BigNumber(ar).shiftedBy(12);
   }
 }
 

@@ -1,6 +1,8 @@
 import type { ApiConfig } from "common/lib/api";
+import type { AbstractConfig } from "../common";
 import CommonArweave from "../common";
 import WebCryptoDriver from "./webcrypto-driver";
+import type { InitApiConfig } from "common/types";
 
 // declare global {
 //   interface Window {
@@ -12,9 +14,9 @@ import WebCryptoDriver from "./webcrypto-driver";
 // }
 
 export class WebArweave extends CommonArweave {
-  constructor(config: { url: string | URL }) {
-    const url = new URL(config.url);
-    super({ crypto: new WebCryptoDriver(), apiConfig: { url } });
+  constructor(config: InitApiConfig, opts?: Omit<AbstractConfig, "apiConfig">) {
+    config.url = new URL(config.url ?? "http://arweave.net");
+    super({ crypto: opts?.crypto ?? new WebCryptoDriver(), ...opts, apiConfig: config as ApiConfig });
   }
   public static init: (apiConfig: ApiConfig) => CommonArweave;
 }

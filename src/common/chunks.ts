@@ -1,5 +1,6 @@
 import type Api from "./lib/api";
 import { getError } from "./lib/error";
+import type FallbackApi from "./lib/fallbackApi";
 import * as ArweaveUtils from "./lib/utils";
 
 export type TransactionOffsetResponse = {
@@ -14,7 +15,7 @@ export type TransactionChunkResponse = {
 };
 
 export default class Chunks {
-  constructor(private api: Api) {}
+  constructor(private api: Api | FallbackApi) {}
 
   async getTransactionOffset(id: string): Promise<TransactionOffsetResponse> {
     const resp = await this.api.get(`tx/${id}/offset`);
@@ -52,7 +53,7 @@ export default class Chunks {
     let byte = 0;
 
     while (byte < size) {
-      if (this.api.config.logging) {
+      if (this?.api?.config?.logging) {
         console.log(`[chunk] ${byte}/${size}`);
       }
 

@@ -115,9 +115,12 @@ export default class Api {
     return (this._instance = instance);
   }
 
-  public async request<T = any>(config: ApiRequestConfig): Promise<AxiosResponse<T>> {
+  public async request<T = any>(endpoint: string, config?: ApiRequestConfig): Promise<AxiosResponse<T>> {
     const instance = this.instance;
-    return await AsyncRetry((_) => instance(config), { ...this.config.retry, ...config?.retry });
+    return await AsyncRetry((_) => instance({ ...config, url: new URL(endpoint, this.config.url).toString() }), {
+      ...this.config.retry,
+      ...config?.retry,
+    });
   }
   public identity = "Api";
 }

@@ -19,19 +19,23 @@ const defaultFallbackConfig = {
 
 // TODO: test
 
-export class FallbackApi {
+export class FallbackApi extends Api {
   protected instances!: Api[];
+  protected globalConfig: Omit<ApiConfig, "url">;
 
-  constructor(hosts: ApiConfig[] | URL[]) {
+  constructor(hosts: ApiConfig[] | URL[], opts?: { globalConfig?: Omit<ApiConfig, "url"> }) {
+    super({ url: new URL("https://irys.xyz") });
+    this.globalConfig = opts?.globalConfig ?? {};
     this.hosts = hosts;
   }
 
   set hosts(hosts: ApiConfig[] | URL[]) {
-    this.instances = hosts.map((v) => new Api(isApiConfig(v) ? (v as ApiConfig) : { url: v }));
+    this.instances = hosts.map((v) => new Api(isApiConfig(v) ? (v as ApiConfig) : { url: v, ...this.globalConfig }));
   }
 
-  get hosts(): Api[] {
-    return this.instances;
+  protected setInstanceVars(instance: Api): void {
+    this.cookieMap = instance.cookieMap;
+    this.config = instance.config;
   }
 
   public async get<T = any>(endpoint: string, config?: FallbackApiRequestConfig): Promise<AxiosResponse<T>> {
@@ -52,6 +56,7 @@ export class FallbackApi {
       if (!config) continue;
       try {
         const instance = config.instance;
+        this.setInstanceVars(config);
         return await instance({ ...config, url: new URL(endpoint, config.config.url).toString() });
       } catch (e: any) {
         onFallback?.(e, config);

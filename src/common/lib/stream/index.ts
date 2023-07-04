@@ -1,19 +1,19 @@
 import { pipeline } from "stream/promises";
+import type { CreateTransactionInterface } from "../../index";
+import type Transactions from "../../transactions";
 import type Api from "../api";
+import type CryptoInterface from "../crypto/crypto-interface";
+import type { DeepHash } from "../deepHash";
 import type FallbackApi from "../fallbackApi";
+import type Merkle from "../merkle";
+import type { Chunk } from "../merkle";
+import { MAX_CHUNK_SIZE, MIN_CHUNK_SIZE } from "../merkle";
 import type { TransactionInterface } from "../transaction";
 import Transaction from "../transaction";
-import type CryptoInterface from "../crypto/crypto-interface";
-import type { CreateTransactionInterface } from "common";
-import type { JWKInterface } from "../wallet";
-import type { Chunk } from "../merkle";
-import type Merkle from "../merkle";
-import { MAX_CHUNK_SIZE, MIN_CHUNK_SIZE } from "../merkle";
-import { chunker } from "./chunker";
-import { b64UrlToBuffer, bufferTob64Url } from "../utils";
 import { FATAL_CHUNK_UPLOAD_ERRORS } from "../transaction-uploader";
-import type Transactions from "common/transactions";
-import type { DeepHash } from "../deepHash";
+import { b64UrlToBuffer, bufferTob64Url } from "../utils";
+import type { JWKInterface } from "../wallet";
+import { chunker } from "./chunker";
 
 const MAX_CONCURRENT_CHUNK_UPLOAD_COUNT = 128;
 
@@ -38,23 +38,28 @@ export class Stream {
   /**
    * Creates an Arweave transaction from the piped data stream.
    */
-  public async createTransactionAsync(attributes: Partial<Omit<CreateTransactionInterface, "data">>, jwk: JWKInterface | null | undefined) {
+  public createTransactionAsync(
+    attributes: Partial<Omit<CreateTransactionInterface, "data">>,
+    jwk: JWKInterface | null | undefined,
+  ): (source: AsyncIterable<Buffer>) => Promise<Transaction> {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const oThis = this;
     return async (source: AsyncIterable<Buffer>): Promise<Transaction> => {
-      const chunks = await pipeline(source, this.generateTransactionChunksAsync());
+      const chunks = await pipeline(source, oThis.generateTransactionChunksAsync());
 
       const txAttrs = Object.assign({}, attributes);
 
       txAttrs.owner ??= jwk?.n;
-      txAttrs.last_tx ??= await this.transactions.getTransactionAnchor();
+      txAttrs.last_tx ??= await oThis.transactions.getTransactionAnchor();
 
       const lastChunk = chunks.chunks[chunks.chunks.length - 1];
       const dataByteLength = lastChunk.maxByteRange;
 
-      txAttrs.reward ??= await this.transactions.getPrice(dataByteLength, txAttrs.target);
+      txAttrs.reward ??= await oThis.transactions.getPrice(dataByteLength, txAttrs.target);
 
       txAttrs.data_size = dataByteLength.toString();
 
-      const tx = new Transaction({ attributes: txAttrs as TransactionInterface, deps: { merkle: this.merkle, deepHash: this.deepHash } });
+      const tx = new Transaction({ attributes: txAttrs as TransactionInterface, deps: { merkle: oThis.merkle, deepHash: oThis.deepHash } });
 
       tx.chunks = chunks;
       tx.data_root = bufferTob64Url(chunks.data_root);
@@ -66,15 +71,16 @@ export class Stream {
   /**
    * Generates the Arweave transaction chunk information from the piped data stream.
    */
-  public generateTransactionChunksAsync() {
-    return async function (this: Stream, source: AsyncIterable<Buffer>): Promise<NonNullable<Transaction["chunks"]>> {
+  public generateTransactionChunksAsync(): (source: AsyncIterable<Buffer>) => Promise<NonNullable<Transaction["chunks"]>> {
+    const crypto = this.crypto;
+    return async (source: AsyncIterable<Buffer>): Promise<NonNullable<Transaction["chunks"]>> => {
       const chunks: Chunk[] = [];
 
       /**
        * @param chunkByteIndex the index the start of the specified chunk is located at within its original data stream.
        */
       const addChunk = async (chunkByteIndex: number, chunk: Buffer): Promise<Chunk> => {
-        const dataHash = await this.crypto.hash(chunk);
+        const dataHash = await crypto.hash(chunk);
 
         const chunkRep = {
           dataHash,

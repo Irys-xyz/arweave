@@ -101,13 +101,19 @@ export default class Transactions {
       if (response.data.format >= 2 && data_size > 0 && data_size <= 1024 * 1024 * 12) {
         const data = await this.getData(id);
         return new Transaction({
-          ...response.data,
-          data,
+          attributes: {
+            ...response.data,
+            data,
+          },
+          deps: { merkle: this.merkle, deepHash: this.deepHash },
         });
       }
       return new Transaction({
-        ...response.data,
-        format: response.data.format || 1,
+        attributes: {
+          ...response.data,
+          format: response.data.format || 1,
+        },
+        deps: { merkle: this.merkle, deepHash: this.deepHash },
       });
     }
 
@@ -257,9 +263,9 @@ export default class Transactions {
 
   public async post(transaction: Transaction | Buffer | string | object): Promise<{ status: number; statusText: string; data: any }> {
     if (typeof transaction === "string") {
-      transaction = new Transaction(JSON.parse(transaction as string));
+      transaction = new Transaction({ attributes: JSON.parse(transaction as string), deps: { merkle: this.merkle, deepHash: this.deepHash } });
     } else if (typeof (transaction as any).readInt32BE === "function") {
-      transaction = new Transaction(JSON.parse(transaction.toString()));
+      transaction = new Transaction({ attributes: JSON.parse(transaction.toString()), deps: { merkle: this.merkle, deepHash: this.deepHash } });
     } else if (typeof transaction === "object" && !(transaction instanceof Transaction)) {
       transaction = new Transaction({ attributes: transaction as object, deps: { merkle: this.merkle, deepHash: this.deepHash } });
     }

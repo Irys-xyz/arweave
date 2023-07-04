@@ -1,19 +1,11 @@
-import Arweave from "../../src/common/arweave";
+import arweave from "../_arweave";
 import { createReadStream } from "fs";
 import { pipeline } from "stream/promises";
-import { generateTransactionChunksAsync } from "../../src/common/lib/stream/generate-transaction-chunks-async";
-import { uploadTransactionAsync } from "../../src/common/lib/stream/upload-transaction-async";
+// import { generateTransactionChunksAsync } from "../../src/common/lib/stream/generate-transaction-chunks-async";
+// import { uploadTransactionAsync } from "../../src/common/lib/stream/upload-transaction-async";
 import { Readable } from "stream";
 
 describe("uploadTransactionAsync", () => {
-  const arweave = new Arweave({
-    host: "arweave.net",
-    protocol: "https",
-    port: 443,
-    logging: false,
-    timeout: 15000,
-  });
-
   it(
     "should successfully seed existing small transactions",
     async () => {
@@ -25,7 +17,7 @@ describe("uploadTransactionAsync", () => {
 
       await tx.prepareChunks(txData);
 
-      const uploadOp = pipeline(Readable.from([txData]), uploadTransactionAsync(tx, arweave, false));
+      const uploadOp = pipeline(Readable.from([txData]), arweave.stream.uploadTransactionAsync(tx, false));
 
       await expect(uploadOp).resolves.not.toThrow();
     },
@@ -41,10 +33,10 @@ describe("uploadTransactionAsync", () => {
       const tx = await arweave.transactions.get(existingTxId);
 
       const txDataStreamForChunks = createReadStream(txDataFilePath);
-      tx.chunks = await pipeline(txDataStreamForChunks, generateTransactionChunksAsync());
+      tx.chunks = await pipeline(txDataStreamForChunks, arweave.stream.generateTransactionChunksAsync());
 
       const txDataStreamForUpload = createReadStream(txDataFilePath);
-      const uploadOp = pipeline(txDataStreamForUpload, uploadTransactionAsync(tx, arweave, false));
+      const uploadOp = pipeline(txDataStreamForUpload, arweave.stream.uploadTransactionAsync(tx, false));
 
       await expect(uploadOp).resolves.not.toThrow();
     },
@@ -64,7 +56,7 @@ describe("uploadTransactionAsync", () => {
 
     txData.fill(0, 0, 126);
 
-    const uploadOp = pipeline(Readable.from([txData]), uploadTransactionAsync(tx, arweave, false));
+    const uploadOp = pipeline(Readable.from([txData]), arweave.stream.uploadTransactionAsync(tx, false));
     await expect(uploadOp).rejects.toBeDefined();
   });
 });
