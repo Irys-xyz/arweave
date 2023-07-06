@@ -4,7 +4,7 @@ import Silo from "../src/common/silo";
 import Transactions from "../src/common/transactions";
 import Wallets from "../src/common/wallets";
 import { arweaveInstance } from "./_arweave";
-import Api from "../src/common/lib/api";
+import FallbackApi from "../src/common/lib/fallbackApi";
 
 const arweave = arweaveInstance();
 
@@ -12,7 +12,7 @@ describe("Initialization", function () {
   jest.setTimeout(100000);
 
   it("should have components", function () {
-    expect(arweave.api).toBeInstanceOf(Api);
+    expect(arweave.api).toBeInstanceOf(FallbackApi);
 
     expect(arweave.transactions).toBeInstanceOf(Transactions);
 

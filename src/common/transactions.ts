@@ -44,11 +44,15 @@ export default class Transactions {
   // TODO: remove
   public async search(tagName: string, tagValue: string): Promise<string[]> {
     return this.api
-      .post(`arql`, {
-        op: "equals",
-        expr1: tagName,
-        expr2: tagValue,
-      })
+      .post(
+        `arql`,
+        {
+          op: "equals",
+          expr1: tagName,
+          expr2: tagValue,
+        },
+        { fallback: { maxAttempts: 1 } },
+      )
       .then((response) => {
         if (!response.data) {
           return [];

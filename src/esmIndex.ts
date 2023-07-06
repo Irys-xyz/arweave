@@ -1,4 +1,4 @@
-import { NodeArweave as Arweave } from "./node";
+import { Arweave as Arweave } from "./node";
 export { default as WebArweave } from "./web";
 
 export const NodeArweave = Arweave;

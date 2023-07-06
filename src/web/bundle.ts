@@ -1,4 +1,3 @@
-import type { ApiConfig } from "../common/lib/api";
 import WebArweave from "./arweave";
 
 declare global {
@@ -10,9 +9,9 @@ declare global {
   var Arweave: typeof WebArweave;
 }
 
-WebArweave.init = (apiConfig: ApiConfig): InstanceType<typeof WebArweave> => {
-  return new WebArweave(apiConfig);
-};
+// Arweave.init = (apiConfig: ApiConfig): InstanceType<typeof Arweave> => {
+//   return new Arweave(apiConfig);
+// };
 
 if (typeof globalThis === "object") {
   globalThis.Arweave = WebArweave;

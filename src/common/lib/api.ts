@@ -60,24 +60,18 @@ export default class Api {
     };
   }
 
-  public async get<T = any>(endpoint: string, config?: ApiRequestConfig): Promise<AxiosResponse<T>> {
+  public async get<T = any>(path: string, config?: ApiRequestConfig): Promise<AxiosResponse<T>> {
     try {
-      return await AsyncRetry((_) => this.instance.get<T>(endpoint, { ...config, headers: { ...config?.headers, ...this.config?.headers } }), {
-        ...this.config.retry,
-        ...config?.retry,
-      });
+      return await this.request(path, { ...config, method: "GET" });
     } catch (error: any) {
       if (error.response?.status) return error.response;
       throw error;
     }
   }
 
-  public async post<T = any>(endpoint: string, body: Buffer | string | object | null, config?: ApiRequestConfig): Promise<AxiosResponse<T>> {
+  public async post<T = any>(path: string, body: Buffer | string | object | null, config?: ApiRequestConfig): Promise<AxiosResponse<T>> {
     try {
-      return await AsyncRetry((_) => this.instance.post(endpoint, body, { ...config, headers: { ...config?.headers, ...this.config?.headers } }), {
-        ...this.config.retry,
-        ...config?.retry,
-      });
+      return await this.request(path, { data: body, ...config, method: "POST" });
     } catch (error: any) {
       if (error.response?.status) return error.response;
       throw error;
@@ -115,14 +109,14 @@ export default class Api {
     return (this._instance = instance);
   }
 
-  public async request<T = any>(endpoint: string, config?: ApiRequestConfig): Promise<AxiosResponse<T>> {
+  public async request<T = any>(path: string, config?: ApiRequestConfig): Promise<AxiosResponse<T>> {
     const instance = this.instance;
-    return await AsyncRetry((_) => instance({ ...config, url: new URL(endpoint, this.config.url).toString() }), {
+    const url = config?.url ?? new URL(path, this.config.url).toString();
+    return AsyncRetry((_) => instance({ ...config, url }), {
       ...this.config.retry,
       ...config?.retry,
     });
   }
-  public identity = "Api";
 }
 
 /**

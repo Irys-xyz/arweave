@@ -39,8 +39,10 @@ describe("API", function () {
 
   it("should POST GQL queries return a list of results", async function () {
     const txs = (
-      await arweave.api.post("/graphql", {
-        query: `
+      await arweave.api.post(
+        "/graphql",
+        {
+          query: `
       {
         transactions(
           tags: [
@@ -54,7 +56,9 @@ describe("API", function () {
           }
         }
       }`,
-      })
+        },
+        { fallback: { maxAttempts: 1 } },
+      )
     ).data.data.transactions.edges;
 
     expect(Array.isArray(txs)).toBe(true);

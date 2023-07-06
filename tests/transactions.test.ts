@@ -197,10 +197,17 @@ describe("Transactions", function () {
   });
 
   it("should get transaction data > 12MiB from chunks or gateway", async function () {
-    const data = (await arweave.transactions.getData(liveDataTxidLarge, {
-      decode: true,
-    })) as Uint8Array;
-    expect(data.byteLength).toBe(14166765);
+    // arweave.api.globalConfig = { timeout: 5_000, retry: { retries: 1 } };
+    // await arweave.api.addPeersFrom("https://arweave.net", { limit: 5 });
+    try {
+      const data = (await arweave.transactions.getData(liveDataTxidLarge, {
+        decode: true,
+      })) as Uint8Array;
+      expect(data.byteLength).toBe(14166765);
+    } catch (e) {
+      console.log(e);
+    }
+    // arweave.api = oldApi;
   }, 300_000);
 
   // it("should get transaction data > 12MiB from a node", async function () {

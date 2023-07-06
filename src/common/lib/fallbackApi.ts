@@ -1,6 +1,7 @@
 import type { AxiosError, AxiosResponse } from "axios";
 import type { ApiConfig, ApiRequestConfig } from "./api";
 import Api from "./api";
+import type { PeerList } from "common/network";
 
 type FallbackApiRequestConfig = {
   fallback?: {
@@ -10,63 +11,59 @@ type FallbackApiRequestConfig = {
   };
 } & ApiRequestConfig;
 
-const isApiConfig = (o: URL | ApiConfig | string): o is ApiConfig => typeof o !== "string" && Object.hasOwn(o, "url");
+const isApiConfig = (o: URL | ApiConfig | string): o is ApiConfig => typeof o !== "string" && "url" in o;
 
 const defaultFallbackConfig = {
-  maxAttempts: 5,
-  randomlySelect: false,
+  maxAttempts: 15,
+  randomlySelect: true,
 };
 
 // TODO: test
 
-export class FallbackApi extends Api {
-  protected instances!: Api[];
-  protected globalConfig: Omit<ApiConfig, "url">;
+export class FallbackApi {
+  public instances: Api[] = [];
+  public globalConfig: Omit<ApiConfig, "url">;
 
-  constructor(hosts: ApiConfig[] | URL[] | string[], opts?: { globalConfig?: Omit<ApiConfig, "url"> }) {
-    super();
+  constructor(hosts?: ApiConfig[] | URL[] | string[], opts?: { globalConfig?: Omit<ApiConfig, "url"> }) {
     this.globalConfig = opts?.globalConfig ?? {};
-    this.hosts = hosts;
+    if (hosts) this.addHosts(hosts);
   }
 
-  set hosts(hosts: ApiConfig[] | URL[] | string[]) {
-    this.instances = hosts.map((v) => new Api(isApiConfig(v) ? (v as ApiConfig) : { url: new URL(v), ...this.globalConfig }));
+  public async addPeersFrom(url: string | URL, options?: { limit?: number }): Promise<void> {
+    const peers = (await this.get<PeerList>("", { url: new URL("/peers", url).toString() })).data;
+    this.addHosts(peers.slice(0, options?.limit).map((p) => `http://${p}`));
   }
 
-  protected setInstanceVars(instance: Api): void {
-    this.cookieMap = instance.cookieMap;
-    this.config = instance.config;
+  public addHosts(hosts: (URL | string | ApiConfig)[]): void {
+    hosts.forEach((h) => this.instances.push(new Api(isApiConfig(h) ? (h as ApiConfig) : { url: new URL(h), ...this.globalConfig })));
   }
 
-  public async get<T = any>(endpoint: string, config?: FallbackApiRequestConfig): Promise<AxiosResponse<T>> {
-    return this.request<T>(endpoint, { ...config, method: "POST" });
+  public async get<T = any>(path: string, config?: FallbackApiRequestConfig): Promise<AxiosResponse<T>> {
+    return this.request<T>(path, { ...config, method: "GET" });
   }
 
-  public async post<T = any>(endpoint: string, body: Buffer | string | object | null, config?: FallbackApiRequestConfig): Promise<AxiosResponse<T>> {
-    return this.request<T>(endpoint, { data: body, ...config, method: "POST" });
+  public async post<T = any>(path: string, body: Buffer | string | object | null, config?: FallbackApiRequestConfig): Promise<AxiosResponse<T>> {
+    return this.request<T>(path, { data: body, ...config, method: "POST" });
   }
 
-  public async request<T = any>(endpoint: string, config?: FallbackApiRequestConfig): Promise<AxiosResponse<T>> {
-    const fallbackConfig = config?.fallback;
+  public async request<T = any>(path: string, config?: FallbackApiRequestConfig): Promise<AxiosResponse<T>> {
+    const fallbackConfig = { ...defaultFallbackConfig, ...config?.fallback };
     let attempts = 0;
-    const maxAttempts = Math.min(fallbackConfig?.maxAttempts ?? defaultFallbackConfig?.maxAttempts, this.instances.length);
+    const maxAttempts = Math.min(Math.max(fallbackConfig?.maxAttempts, 1), this.instances.length);
     const onFallback = fallbackConfig?.onFallback;
-    do {
-      const config = this.instances.at(fallbackConfig?.randomlySelect ? Math.floor(Math.random() * this.instances.length) : attempts);
-      if (!config) continue;
+    if (this.instances.length === 0) throw new Error(`Unable to run request due to 0 configured URLs.`);
+    while (attempts++ < maxAttempts) {
+      const apiInstance = this.instances.at(fallbackConfig?.randomlySelect ? Math.floor(Math.random() * this.instances.length) : attempts - 1);
+      if (!apiInstance) continue;
       try {
-        const instance = config.instance;
-        this.setInstanceVars(config);
-        return await instance({ ...config, url: new URL(endpoint, config.config.url).toString() });
+        return await apiInstance.request(path, { ...config });
       } catch (e: any) {
-        onFallback?.(e, config);
+        onFallback?.(e, apiInstance);
         if (attempts >= maxAttempts) throw e;
       }
-    } while (attempts++ < maxAttempts);
-    // make TS happy
-    return await this.instances[0].instance({ ...config, url: new URL(endpoint, this.instances[0].config.url).toString() });
-  }
+    }
 
-  public identity = "FallbackApi";
+    throw new Error("unreachable");
+  }
 }
 export default FallbackApi;
