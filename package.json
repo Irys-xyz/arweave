@@ -7,7 +7,6 @@
   "main": "./build/cjs/cjsIndex.js",
   "browser": "./build/esm/web/index.js",
   "module": "./build/esm/esmIndex.js",
-  "sideEffects": false,
   "exports": {
     "./node": {
       "require": {
@@ -63,6 +62,7 @@
   },
   "devDependencies": {
     "@types/async-retry": "^1.4.5",
+    "@types/bn.js": "^5.1.1",
     "@types/chai": "^4.3.5",
     "@types/jest": "^29.5.2",
     "@types/node": "^20.2.5",

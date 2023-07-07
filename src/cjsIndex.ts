@@ -1,5 +1,5 @@
-import NodeArweave from "./node/index";
-import WebArweave from "./web/index";
+import { Arweave as NodeArweave } from "./node/index";
+import { Arweave as WebArweave } from "./web/index";
 
 // this class allows for CJS imports without .default, as well as still allowing for destructured Node/WebIrys imports.
 class Arweave extends NodeArweave {

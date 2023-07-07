@@ -15,7 +15,6 @@ import type { JWKInterface } from "./lib/wallet";
 import Network from "./network";
 import Silo from "./silo";
 import Transactions from "./transactions";
-import type { InitApiConfig, InitFallbackApiConfig } from "./types";
 import Wallets from "./wallets";
 
 export type CreateTransactionInterface = {
@@ -32,7 +31,7 @@ export type CreateTransactionInterface = {
 };
 
 export type AbstractConfig = {
-  apiConfig?: InitFallbackApiConfig | InitApiConfig | ApiConfig[] | string[];
+  apiConfig?: URL | string | ApiConfig | ApiConfig[] | string[] | URL[];
   crypto: CryptoInterface;
 };
 
@@ -65,9 +64,7 @@ export abstract class Arweave {
   constructor(config: AbstractConfig) {
     this.config = config;
     this.crypto = config.crypto;
-    this.api = new FallbackApi(
-      config.apiConfig ? (Array.isArray(config.apiConfig) ? config.apiConfig : [config.apiConfig as InitFallbackApiConfig]) : undefined,
-    );
+    this.api = new FallbackApi(config.apiConfig ? (Array.isArray(config.apiConfig) ? config.apiConfig : [config.apiConfig as ApiConfig]) : undefined);
     this.wallets = new Wallets(this.api, config.crypto);
     this.chunks = new Chunks(this.api);
     this.network = new Network(this.api);
