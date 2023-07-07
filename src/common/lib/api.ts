@@ -4,7 +4,7 @@ import AsyncRetry from "async-retry";
 import Arweave from "../arweave";
 
 export interface ApiConfig {
-  url: URL;
+  url: URL | string;
   timeout?: number;
   logging?: boolean;
   logger?: (msg: string) => void;

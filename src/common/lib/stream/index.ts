@@ -40,7 +40,7 @@ export class Stream {
    */
   public createTransactionAsync(
     attributes: Partial<Omit<CreateTransactionInterface, "data">>,
-    jwk: JWKInterface | null | undefined,
+    jwk?: JWKInterface,
   ): (source: AsyncIterable<Buffer>) => Promise<Transaction> {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const oThis = this;
