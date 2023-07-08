@@ -41,25 +41,6 @@ export default class Transactions {
     this.merkle = deps.merkle;
     this.deepHash = deps.deepHash;
   }
-  // TODO: remove
-  public async search(tagName: string, tagValue: string): Promise<string[]> {
-    return this.api
-      .post(
-        `arql`,
-        {
-          op: "equals",
-          expr1: tagName,
-          expr2: tagValue,
-        },
-        { fallback: { maxAttempts: 1 } },
-      )
-      .then((response) => {
-        if (!response.data) {
-          return [];
-        }
-        return response.data;
-      });
-  }
 
   public getTransactionAnchor(): Promise<string> {
     /**
@@ -151,13 +132,7 @@ export default class Transactions {
     });
   }
 
-  public async getData(
-    id: string,
-    options?: {
-      decode?: boolean;
-      string?: boolean;
-    },
-  ): Promise<string | Uint8Array> {
+  public async getData(id: string): Promise<string | Uint8Array> {
     let data: Uint8Array | undefined = undefined;
 
     try {
@@ -181,12 +156,7 @@ export default class Transactions {
       throw new Error(`${id} data was not found!`);
     }
 
-    if (options?.decode) {
-      return options?.string ? ArweaveUtils.bufferToString(data) : data;
-    }
-
-    // Since decode wasn't requested, caller expects b64url encoded data.
-    return ArweaveUtils.bufferTob64Url(data);
+    return data;
   }
 
   public async sign(
