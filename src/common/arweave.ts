@@ -13,7 +13,6 @@ import * as ArweaveUtils from "./lib/utils";
 import { concatBuffers, stringToBuffer } from "./lib/utils";
 import type { JWKInterface } from "./lib/wallet";
 import Network from "./network";
-import Silo from "./silo";
 import Transactions from "./transactions";
 import Wallets from "./wallets";
 
@@ -47,34 +46,36 @@ export abstract class Arweave {
 
   public blocks: Blocks;
 
-  public silo: Silo;
-
   public chunks: Chunks;
-  public merkle: Merkle;
 
   public static init: (apiConfig: ApiConfig) => Arweave;
 
   public static utils = ArweaveUtils;
   public stream: Stream;
-  public deepHash: DeepHash;
-  public crypto: CryptoInterface;
+
+  public crypto: CryptoInterface & { deepHash: DeepHash };
+
+  protected deepHash: DeepHash;
+  public merkle: Merkle;
 
   public static VERSION = "REPLACEMEARWEAVEVERSION";
 
   constructor(config: AbstractConfig) {
     this.config = config;
+    // @ts-expect-error injection
     this.crypto = config.crypto;
+    this.deepHash ??= new DeepHash({ deps: { utils: { stringToBuffer, concatBuffers }, crypto: config.crypto } });
+    this.crypto.deepHash = this.deepHash;
     this.api = new FallbackApi(config.apiConfig ? (Array.isArray(config.apiConfig) ? config.apiConfig : [config.apiConfig as ApiConfig]) : undefined);
     this.wallets = new Wallets(this.api, config.crypto);
     this.chunks = new Chunks(this.api);
     this.network = new Network(this.api);
     this.blocks = new Blocks(this.api, this.network);
     this.merkle = new Merkle({ deps: { crypto: this.crypto } });
-    this.deepHash = new DeepHash({ deps: { utils: { stringToBuffer, concatBuffers }, crypto: config.crypto } });
+
     this.transactions = new Transactions({
       deps: { api: this.api, crypto: config.crypto, chunks: this.chunks, merkle: this.merkle, deepHash: this.deepHash },
     });
-    this.silo = new Silo(this.crypto, this.transactions);
     this.stream = new Stream({
       deps: { crypto: this.crypto, api: this.api, merkle: this.merkle, transactions: this.transactions, deepHash: this.deepHash },
     });
@@ -82,6 +83,10 @@ export abstract class Arweave {
 
   public get utils(): typeof ArweaveUtils {
     return Arweave.utils;
+  }
+
+  public get deps(): { deepHash: DeepHash; merkle: Merkle } {
+    return { deepHash: this.deepHash, merkle: this.merkle };
   }
 
   public getConfig(): AbstractConfig {
@@ -135,59 +140,6 @@ export abstract class Arweave {
     });
     await createdTransaction.getSignatureData();
     return createdTransaction;
-  }
-
-  public async createSiloTransaction(attributes: Partial<CreateTransactionInterface>, jwk: JWKInterface, siloUri: string): Promise<Transaction> {
-    const transaction: Partial<CreateTransactionInterface> = {};
-
-    Object.assign(transaction, attributes);
-
-    if (!attributes.data) {
-      throw new Error(`Silo transactions must have a 'data' value`);
-    }
-
-    if (!siloUri) {
-      throw new Error(`No Silo URI specified.`);
-    }
-
-    if (attributes.target || attributes.quantity) {
-      throw new Error(`Silo transactions can only be used for storing data, sending AR to other wallets isn't supported.`);
-    }
-
-    if (attributes.owner == undefined) {
-      if (!jwk || !jwk.n) {
-        throw new Error(`A new Arweave transaction must either have an 'owner' attribute, or you must provide the jwk parameter.`);
-      }
-      transaction.owner = jwk.n;
-    }
-
-    if (attributes.last_tx == undefined) {
-      transaction.last_tx = await this.transactions.getTransactionAnchor();
-    }
-
-    const siloResource = await this.silo.parseUri(siloUri);
-
-    if (typeof attributes.data === "string") {
-      const encrypted = await this.crypto.encrypt(ArweaveUtils.stringToBuffer(attributes.data), siloResource.getEncryptionKey());
-      transaction.reward = await this.transactions.getPrice(encrypted.byteLength);
-      transaction.data = ArweaveUtils.bufferTob64Url(encrypted);
-    }
-
-    if (attributes.data instanceof Uint8Array) {
-      const encrypted = await this.crypto.encrypt(attributes.data, siloResource.getEncryptionKey());
-      transaction.reward = await this.transactions.getPrice(encrypted.byteLength);
-      transaction.data = ArweaveUtils.bufferTob64Url(encrypted);
-    }
-
-    const siloTransaction = new Transaction({
-      attributes: transaction as TransactionInterface,
-      deps: { merkle: this.merkle, deepHash: this.deepHash },
-    });
-
-    siloTransaction.addTag("Silo-Name", siloResource.getAccessKey());
-    siloTransaction.addTag("Silo-Version", `0.1.0`);
-
-    return siloTransaction;
   }
 }
 
