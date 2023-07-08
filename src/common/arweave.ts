@@ -85,10 +85,6 @@ export abstract class Arweave {
     return Arweave.utils;
   }
 
-  public get deps(): { deepHash: DeepHash; merkle: Merkle } {
-    return { deepHash: this.deepHash, merkle: this.merkle };
-  }
-
   public getConfig(): AbstractConfig {
     return this.config;
   }
