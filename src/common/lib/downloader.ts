@@ -41,8 +41,6 @@ export async function* downloadTx(txId: string, api: Api | FallbackApi, options?
     const concurrency = Math.min(parallelChunks, opts.concurrency);
     let currChunk = 0;
 
-    // logger.debug(`[downloadTx] Tx ${txId} start ${startOffset} size ${size} chunks ${chunks} concurrency ${concurrency}`);
-
     for (let i = 0; i < concurrency; i++) processing.push(getChunk(startOffset.plus(CHUNK_SIZE * currChunk++)));
 
     while (currChunk < parallelChunks) {

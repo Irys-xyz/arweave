@@ -174,7 +174,7 @@ export default class Transactions {
     if (!data) {
       console.warn(`Falling back to chunks for ${id}`);
       try {
-        const gen = this.chunks.concurrentDownloadChunkedData(id);
+        const gen = this.chunks.concurrentChunkDownloader(id);
         data = Readable.from(gen);
       } catch (error) {
         console.error(`Error while trying to download chunked data for ${id}`);

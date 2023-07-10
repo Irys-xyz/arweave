@@ -118,32 +118,3 @@ export default class Api {
     });
   }
 }
-
-/**
- * *** To be removed when browsers catch up with the whatwg standard. ***
- * [Symbol.AsyncIterator] is needed to use `for-await` on the returned ReadableStream (web stream).
- * Feature is available in nodejs, and should be available in browsers eventually.
- */
-export const addAsyncIterator = (body: ReadableStream): ReadableStream => {
-  const bodyWithIter = body as ReadableStream<Uint8Array> & AsyncIterable<Uint8Array>;
-  if (typeof bodyWithIter[Symbol.asyncIterator] === "undefined") {
-    bodyWithIter[Symbol.asyncIterator] = webIiterator<Uint8Array>(body);
-    return bodyWithIter;
-  }
-  return body;
-};
-
-const webIiterator = function <T>(stream: ReadableStream): () => AsyncGenerator<Awaited<T>, void> {
-  return async function* iteratorGenerator<T>() {
-    const reader = stream.getReader(); // lock
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) return;
-        yield value as T;
-      }
-    } finally {
-      reader.releaseLock(); // unlock
-    }
-  };
-};

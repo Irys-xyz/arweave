@@ -48,7 +48,8 @@ export default class Chunks {
   /**
    * Downloads chunks from the configured API peers, with a default concurrency of 10
    * @param id - ID of the transaction to download
-   * @param options - concurrency: the number of chunks to download in parallel. reduce on slower connections.
+   * @param options - Options object for configuring the downloader
+   * @param options.concurrency - The number of chunks to download simultaneously. reduce on slower connections.
    * @returns
    */
   async downloadChunkedData(id: string, options?: { concurrency?: number }): Promise<Uint8Array> {
@@ -56,14 +57,14 @@ export default class Chunks {
     const size = parseInt(offsetResponse.size);
     const data = new Uint8Array(size);
     let byte = 0;
-    for await (const chunkData of this.concurrentDownloadChunkedData(id, options)) {
+    for await (const chunkData of this.concurrentChunkDownloader(id, options)) {
       data.set(chunkData, byte);
       byte += chunkData.length;
     }
     return data;
   }
 
-  public async *concurrentDownloadChunkedData(id: string, options?: { concurrency?: number }): AsyncGenerator<Uint8Array, void, unknown> {
+  public async *concurrentChunkDownloader(id: string, options?: { concurrency?: number }): AsyncGenerator<Uint8Array, void, unknown> {
     const opts = { concurrency: 10, ...options };
     const metadata = await this.getTransactionMetadata(id);
 
