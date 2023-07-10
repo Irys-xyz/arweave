@@ -11,9 +11,7 @@ describe("uploadTransactionAsync", () => {
     async () => {
       const existingTxId = "0dfg6H6aNXX0w_RswU_pshG20qFs0dsOypcf-V1VDYk";
       const tx = await arweave.transactions.get(existingTxId);
-      const txData = (await arweave.transactions.getData(existingTxId, {
-        decode: true,
-      })) as Uint8Array;
+      const txData = (await arweave.transactions.getData(existingTxId)) as Uint8Array;
 
       await tx.prepareChunks(txData);
 
@@ -48,9 +46,7 @@ describe("uploadTransactionAsync", () => {
 
     const existingTxId = "0dfg6H6aNXX0w_RswU_pshG20qFs0dsOypcf-V1VDYk";
     const tx = await arweave.transactions.get(existingTxId);
-    const txData = (await arweave.transactions.getData(existingTxId, {
-      decode: true,
-    })) as Uint8Array;
+    const txData = (await arweave.transactions.getData(existingTxId)) as Uint8Array;
 
     await tx.prepareChunks(txData);
 

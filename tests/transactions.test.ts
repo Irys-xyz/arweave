@@ -1,6 +1,7 @@
 import * as crypto from "crypto";
 import Transaction from "../src/common/lib/transaction";
 import { arweaveInstance } from "./_arweave";
+import { bufferToString, bufferTob64Url } from "../src/common/lib/utils";
 
 const arweave = arweaveInstance();
 // const arweaveDirectNode = arweaveInstanceDirectNode();
@@ -184,15 +185,13 @@ describe("Transactions", function () {
   }, 30_000);
 
   it("should get transaction data", async function () {
-    const txRawData = await arweave.transactions.getData(liveDataTxid);
+    const txRawData = bufferTob64Url(await arweave.transactions.getData(liveDataTxid));
     expect(txRawData).toEqual(expect.stringContaining("CjwhRE9DVFlQRSBodG1sPgo"));
 
-    const txDecodeData = await arweave.transactions.getData(liveDataTxid, {
-      decode: true,
-    });
-    expect((txDecodeData as Uint8Array).slice(0, 4)).toEqual(new Uint8Array([10, 60, 33, 68]));
+    const txDecodeData = await arweave.transactions.getData(liveDataTxid);
+    expect((txDecodeData as Uint8Array).slice(0, 4)).toEqual(Buffer.from([10, 60, 33, 68]));
 
-    const txDecodeStringData = await arweave.transactions.getData(liveDataTxid, { decode: true, string: true });
+    const txDecodeStringData = bufferToString(await arweave.transactions.getData(liveDataTxid));
     expect(txDecodeStringData).toContain("<title>ARWEAVE / PEER EXPLORER</title>");
   });
 
@@ -200,9 +199,7 @@ describe("Transactions", function () {
     // arweave.api.globalConfig = { timeout: 5_000, retry: { retries: 1 } };
     // await arweave.api.addPeersFrom("https://arweave.net", { limit: 5 });
     try {
-      const data = (await arweave.transactions.getData(liveDataTxidLarge, {
-        decode: true,
-      })) as Uint8Array;
+      const data = (await arweave.transactions.getData(liveDataTxidLarge)) as Uint8Array;
       expect(data.byteLength).toBe(14166765);
     } catch (e) {
       console.log(e);
@@ -219,11 +216,11 @@ describe("Transactions", function () {
   //   expect(data.byteLength).to.equal(14166765);
   // });
 
-  it("should find transactions", async function () {
-    const results = await arweave.transactions.search("Silo-Name", "BmjRGIsemI77+eQb4zX8");
+  // it("should find transactions", async function () {
+  //   const results = await arweave.transactions.search("Silo-Name", "BmjRGIsemI77+eQb4zX8");
 
-    expect(results).toEqual(expect.arrayContaining(["Sgmyo7nUqPpVQWUfK72p5yIpd85QQbhGaWAF-I8L6yE"]));
-  });
+  //   expect(results).toEqual(expect.arrayContaining(["Sgmyo7nUqPpVQWUfK72p5yIpd85QQbhGaWAF-I8L6yE"]));
+  // });
 
   it("should support format=2 transaction signing", async function () {
     const jwk = require("./fixtures/arweave-keyfile-fOVzBRTBnyt4VrUUYadBH8yras_-jhgpmNgg-5b3vEw.json");

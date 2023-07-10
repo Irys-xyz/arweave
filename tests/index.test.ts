@@ -1,6 +1,6 @@
 import NodeCryptoDriver from "../src/node/node-driver";
 import Network from "../src/common/network";
-import Silo from "../src/common/silo";
+// import Silo from "../src/common/silo";
 import Transactions from "../src/common/transactions";
 import Wallets from "../src/common/wallets";
 import { arweaveInstance } from "./_arweave";
@@ -22,7 +22,7 @@ describe("Initialization", function () {
 
     expect(arweave.crypto).toBeInstanceOf(NodeCryptoDriver);
 
-    expect(arweave.silo).toBeInstanceOf(Silo);
+    // expect(arweave.silo).toBeInstanceOf(Silo);
   });
 
   // it("should handle default ports", function () {

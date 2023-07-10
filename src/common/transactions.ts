@@ -133,7 +133,7 @@ export default class Transactions {
     });
   }
 
-  public async getData(id: string): Promise<string | Uint8Array> {
+  public async getData(id: string): Promise<Uint8Array> {
     let data: Uint8Array | undefined = undefined;
 
     try {

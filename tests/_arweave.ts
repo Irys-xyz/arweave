@@ -1,10 +1,11 @@
+import type { ApiConfig } from "../src/common/lib/api";
 import Arweave from "../src/node";
-import type { InitApiConfig } from "../src/common/types";
+// import type { InitApiConfig } from "../src/common/types";
 import NodeCryptoDriver from "../src/node/node-driver";
 
 // Arweave.crypto = new NodeCryptoDriver();
 
-export function initInstance(config: InitApiConfig): Arweave {
+export function initInstance(config: ApiConfig): Arweave {
   return new Arweave(config, { crypto: new NodeCryptoDriver() });
 }
 
