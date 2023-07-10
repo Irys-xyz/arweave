@@ -2,7 +2,7 @@ import type Api from "./lib/api";
 import type { SignatureOptions } from "./lib/crypto/crypto-interface";
 import type CryptoInterface from "./lib/crypto/crypto-interface";
 import ArweaveError, { ArweaveErrorType } from "./lib/error";
-import Transaction from "./lib/transaction";
+import Transaction, { ArweaveTag } from "./lib/transaction";
 import * as ArweaveUtils from "./lib/utils";
 import type { JWKInterface } from "./lib/wallet";
 import type { SerializedUploader } from "./lib/transaction-uploader";
@@ -214,7 +214,9 @@ export default class Transactions {
         // Permission is already granted
       }
 
-      const signedTransaction = await arweaveWallet.sign(transaction, options);
+      // for external compatibility
+      transaction.tags = transaction.tags.map((v) => new ArweaveTag(v.name, v.value));
+      const signedTransaction = await arweaveWallet.sign(transaction as unknown as Parameters<typeof arweaveWallet.sign>["0"], options);
 
       transaction.setSignature({
         id: signedTransaction.id,

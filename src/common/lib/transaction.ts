@@ -3,7 +3,7 @@ import * as ArweaveUtils from "./utils";
 import type { DeepHash } from "./deepHash";
 import type { Chunk, Proof } from "./merkle";
 import type { Merkle } from "./merkle";
-import { bufferTob64Url } from "./utils";
+import { b64UrlToBuffer, bufferTob64Url } from "./utils";
 
 class BaseObject {
   [key: string]: any;
@@ -58,7 +58,7 @@ class BaseObject {
   }
 }
 
-export class Tag extends BaseObject {
+export class ArweaveTag extends BaseObject {
   readonly name: string;
   readonly value: string;
 
@@ -68,6 +68,7 @@ export class Tag extends BaseObject {
     this.value = value;
   }
 }
+export type Tag = { name: string; value: string };
 
 export type TransactionInterface = {
   format: number;
@@ -121,14 +122,14 @@ export default class Transaction extends BaseObject implements TransactionInterf
     }
 
     if (attributes.tags) {
-      this.tags = attributes.tags.map((tag: { name: string; value: string }) => {
+      this.tags = attributes.tags /* .map((tag: { name: string; value: string }) => {
         return new Tag(tag.name, tag.value);
-      });
+      }) */;
     }
   }
 
   public addTag(name: string, value: string): void {
-    this.tags.push(new Tag(ArweaveUtils.stringToB64Url(name), ArweaveUtils.stringToB64Url(value)));
+    this.tags.push({ name: ArweaveUtils.stringToB64Url(name), value: ArweaveUtils.stringToB64Url(value) });
   }
 
   public toJSON(): {
@@ -228,11 +229,7 @@ export default class Transaction extends BaseObject implements TransactionInterf
     switch (this.format) {
       case 1:
         const tags = this.tags.reduce((accumulator: Uint8Array, tag: Tag) => {
-          return ArweaveUtils.concatBuffers([
-            accumulator,
-            tag.get("name", { decode: true, string: false }),
-            tag.get("value", { decode: true, string: false }),
-          ]);
+          return ArweaveUtils.concatBuffers([accumulator, b64UrlToBuffer(tag.name), b64UrlToBuffer(tag.value)]);
         }, new Uint8Array());
 
         return ArweaveUtils.concatBuffers([
@@ -249,10 +246,7 @@ export default class Transaction extends BaseObject implements TransactionInterf
           await this.prepareChunks(this.data);
         }
 
-        const tagList: [Uint8Array, Uint8Array][] = this.tags.map((tag) => [
-          tag.get("name", { decode: true, string: false }),
-          tag.get("value", { decode: true, string: false }),
-        ]);
+        const tagList: [Uint8Array, Uint8Array][] = this.tags.map((tag) => [b64UrlToBuffer(tag.name), b64UrlToBuffer(tag.value)]);
 
         return await this.deepHash.deepHash([
           ArweaveUtils.stringToBuffer(this.format.toString()),
