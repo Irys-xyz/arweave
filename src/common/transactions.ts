@@ -13,6 +13,7 @@ import type * as _ from "arconnect";
 import type FallbackApi from "./lib/fallbackApi";
 import type Merkle from "./lib/merkle";
 import type { DeepHash } from "./lib/deepHash";
+import { Readable } from "stream";
 declare const arweaveWallet: Window["arweaveWallet"];
 
 export type TransactionConfirmedData = {
@@ -102,11 +103,11 @@ export default class Transactions {
       });
     }
 
-    if (response.status == 404) {
+    if (response.status === 404) {
       throw new ArweaveError(ArweaveErrorType.TX_NOT_FOUND);
     }
 
-    if (response.status == 410) {
+    if (response.status === 410) {
       throw new ArweaveError(ArweaveErrorType.TX_FAILED);
     }
 
@@ -119,7 +120,7 @@ export default class Transactions {
 
   public getStatus(id: string): Promise<TransactionStatusResponse> {
     return this.api.get(`tx/${id}/status`).then((response) => {
-      if (response.status == 200) {
+      if (response.status === 200) {
         return {
           status: 200,
           confirmed: response.data,
@@ -136,18 +137,47 @@ export default class Transactions {
     let data: Uint8Array | undefined = undefined;
 
     try {
-      data = await this.chunks.downloadChunkedData(id);
+      data = (await this.api.get(`/${id}`, { responseType: "arraybuffer" })).data;
     } catch (error) {
-      console.error(`Error while trying to download chunked data for ${id}`);
+      console.error(`Error while trying to download contiguous data from gateway cache for ${id}`);
+
       console.error(error);
     }
 
     if (!data) {
-      console.warn(`Falling back to gateway cache for ${id}`);
+      console.warn(`Falling back to chunks for ${id}`);
       try {
-        data = (await this.api.get(`/${id}`, { responseType: "arraybuffer" })).data;
+        data = await this.chunks.downloadChunkedData(id);
       } catch (error) {
-        console.error(`Error while trying to download contiguous data from gateway cache for ${id}`);
+        console.error(`Error while trying to download chunked data for ${id}`);
+        console.error(error);
+      }
+    }
+
+    if (!data) {
+      throw new Error(`${id} data was not found!`);
+    }
+
+    return data;
+  }
+
+  public async getDataAsStream(id: string): Promise<Readable> {
+    let data: Readable | undefined = undefined;
+
+    try {
+      data = (await this.api.get(`/${id}`, { responseType: "stream" })).data;
+    } catch (error) {
+      console.error(`Error while trying to download contiguous data from gateway cache for ${id}`);
+      console.error(error);
+    }
+
+    if (!data) {
+      console.warn(`Falling back to chunks for ${id}`);
+      try {
+        const gen = this.chunks.concurrentDownloadChunkedData(id);
+        data = Readable.from(gen);
+      } catch (error) {
+        console.error(`Error while trying to download chunked data for ${id}`);
         console.error(error);
       }
     }

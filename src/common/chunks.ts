@@ -45,49 +45,25 @@ export default class Chunks {
     return parseInt(offsetResponse.offset) - parseInt(offsetResponse.size) + 1;
   }
 
-  async downloadChunkedData(id: string): Promise<Uint8Array> {
-    // const offsetResponse = await this.getTransactionOffset(id);
-    // const size = parseInt(offsetResponse.size);
-    // const endOffset = parseInt(offsetResponse.offset);
-    // const startOffset = endOffset - size + 1;
-
-    // const data = new Uint8Array(size);
-    // let byte = 0;
-
-    // while (byte < size) {
-    //   if (this?.api?.config?.logging) {
-    //     console.log(`[chunk] ${byte}/${size}`);
-    //   }
-
-    //   let chunkData;
-    //   try {
-    //     chunkData = await this.getChunkData(startOffset + byte);
-    //   } catch (error) {
-    //     console.error(`[chunk] Failed to fetch chunk at offset ${startOffset + byte}`);
-    //     console.error(`[chunk] This could indicate that the chunk wasn't uploaded or hasn't yet seeded properly to a particular gateway/node`);
-    //   }
-
-    //   if (chunkData) {
-    //     data.set(chunkData, byte);
-    //     byte += chunkData.length;
-    //   } else {
-    //     throw new Error(`Couldn't complete data download at ${byte}/${size}`);
-    //   }
-    // }
-
-    // return data;
+  /**
+   * Downloads chunks from the configured API peers, with a default concurrency of 10
+   * @param id - ID of the transaction to download
+   * @param options - concurrency: the number of chunks to download in parallel. reduce on slower connections.
+   * @returns
+   */
+  async downloadChunkedData(id: string, options?: { concurrency?: number }): Promise<Uint8Array> {
     const offsetResponse = await this.getTransactionMetadata(id);
     const size = parseInt(offsetResponse.size);
     const data = new Uint8Array(size);
     let byte = 0;
-    for await (const chunkData of this.concurrentDownloadChunkedData(id)) {
+    for await (const chunkData of this.concurrentDownloadChunkedData(id, options)) {
       data.set(chunkData, byte);
       byte += chunkData.length;
     }
     return data;
   }
 
-  async *concurrentDownloadChunkedData(id: string, options?: { concurrency?: number }): AsyncGenerator<Uint8Array, void, unknown> {
+  public async *concurrentDownloadChunkedData(id: string, options?: { concurrency?: number }): AsyncGenerator<Uint8Array, void, unknown> {
     const opts = { concurrency: 10, ...options };
     const metadata = await this.getTransactionMetadata(id);
 

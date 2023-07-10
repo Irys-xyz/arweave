@@ -2,6 +2,8 @@
 import Blocks from "./blocks";
 import Chunks from "./chunks";
 import type { ApiConfig } from "./lib/api";
+import type { AugmentedCrypto } from "./lib/crypto/crypto-augment";
+import { augmentCrypto } from "./lib/crypto/crypto-augment";
 import type CryptoInterface from "./lib/crypto/crypto-interface";
 import { DeepHash } from "./lib/deepHash";
 import FallbackApi from "./lib/fallbackApi";
@@ -10,7 +12,6 @@ import { Stream } from "./lib/stream";
 import type { Tag, TransactionInterface } from "./lib/transaction";
 import Transaction from "./lib/transaction";
 import * as ArweaveUtils from "./lib/utils";
-import { concatBuffers, stringToBuffer } from "./lib/utils";
 import type { JWKInterface } from "./lib/wallet";
 import Network from "./network";
 import Transactions from "./transactions";
@@ -30,8 +31,9 @@ export type CreateTransactionInterface = {
 };
 
 export type AbstractConfig = {
-  apiConfig?: URL | string | ApiConfig | ApiConfig[] | string[] | URL[];
-  crypto: CryptoInterface;
+  gateways?: URL | string | ApiConfig | ApiConfig[] | string[] | URL[];
+  crypto?: CryptoInterface;
+  miners?: ApiConfig[] | string[] | URL[];
 };
 
 export abstract class Arweave {
@@ -53,7 +55,7 @@ export abstract class Arweave {
   public static utils = ArweaveUtils;
   public stream: Stream;
 
-  public crypto: CryptoInterface & { deepHash: DeepHash };
+  public crypto: AugmentedCrypto;
 
   protected deepHash: DeepHash;
   public merkle: Merkle;
@@ -62,12 +64,12 @@ export abstract class Arweave {
 
   constructor(config: AbstractConfig) {
     this.config = config;
-    // @ts-expect-error injection
-    this.crypto = config.crypto;
-    this.deepHash ??= new DeepHash({ deps: { utils: { stringToBuffer, concatBuffers }, crypto: config.crypto } });
-    this.crypto.deepHash = this.deepHash;
-    this.api = new FallbackApi(config.apiConfig ? (Array.isArray(config.apiConfig) ? config.apiConfig : [config.apiConfig as ApiConfig]) : undefined);
-    this.wallets = new Wallets(this.api, config.crypto);
+    if (!config.crypto) throw new Error(`config.crypto is required`); // `crypto` is automatically added by the wrapper constructors, users should never encounter this
+    this.crypto = augmentCrypto(config.crypto, { deepHash: DeepHash });
+    this.deepHash = this.crypto.deepHash;
+    const apiConfig = config.gateways ? (Array.isArray(config.gateways) ? config.gateways : [config.gateways as ApiConfig]) : undefined;
+    this.api = new FallbackApi({ gateways: apiConfig, miners: config.miners });
+    this.wallets = new Wallets(this.api, this.crypto);
     this.chunks = new Chunks(this.api);
     this.network = new Network(this.api);
     this.blocks = new Blocks(this.api, this.network);

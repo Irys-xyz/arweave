@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type Api from "./lib/api";
 import ArweaveError, { ArweaveErrorType } from "./lib/error";
 import type { Tag } from "./lib/transaction";

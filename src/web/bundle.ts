@@ -9,10 +9,6 @@ declare global {
   var Arweave: typeof WebArweave;
 }
 
-// Arweave.init = (apiConfig: ApiConfig): InstanceType<typeof Arweave> => {
-//   return new Arweave(apiConfig);
-// };
-
 if (typeof globalThis === "object") {
   globalThis.Arweave = WebArweave;
 } else if (typeof self === "object") {

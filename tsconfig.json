@@ -18,7 +18,7 @@
     "noUnusedParameters": true,
     
     "strict": true,
-    "baseUrl": "./src",
+    "baseUrl": ".",
     "rootDir": ".",
     "outDir": "/tmp",
     "experimentalDecorators": true,

@@ -310,8 +310,10 @@ describe("GraphQL", function (this: any) {
   this.timeout(20000);
   it("should return a list of results", async function () {
     const txs = (
-      await arweave.api.post("/graphql", {
-        query: `
+      await arweave.api.post(
+        "/graphql",
+        {
+          query: `
       {
         transactions(
           tags: [
@@ -325,7 +327,9 @@ describe("GraphQL", function (this: any) {
           }
         }
       }`,
-      })
+        },
+        { gatewayOnly: true },
+      )
     ).data.data.transactions.edges;
 
     expect(txs).to.be.an("array");

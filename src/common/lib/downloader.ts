@@ -1,6 +1,4 @@
 import BigNumber from "bignumber.js";
-
-// import logger from "@logger";
 import type FallbackApi from "./fallbackApi";
 import type Api from "./api";
 
@@ -63,7 +61,7 @@ export async function* downloadTx(txId: string, api: Api | FallbackApi, options?
     return;
   } catch (e: unknown) {
     if (e instanceof Error) {
-      e.message = "fallbackPeerRequest: " + e.message;
+      e.message = "downloadTx: " + e.message;
     }
     throw e;
   }
