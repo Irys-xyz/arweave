@@ -161,7 +161,7 @@ export default class Transactions {
     return data;
   }
 
-  public async getDataAsStream(id: string): Promise<Readable> {
+  public async getDataStream(id: string): Promise<Readable> {
     let data: Readable | undefined = undefined;
 
     try {
