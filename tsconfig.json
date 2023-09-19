@@ -18,7 +18,7 @@
     "noUnusedParameters": true,
     
     "strict": true,
-    "baseUrl": "./src",
+    "baseUrl": ".",
     "rootDir": ".",
     "outDir": "/tmp",
     "experimentalDecorators": true,
@@ -36,5 +36,6 @@
       "module": "CommonJS"
     }
   },
-  "include": ["src/**/*", "scripts/**/*"]
+  "include": ["src/**/*", "scripts/**/*"],
+  "exclude": ["src/web/bundle.ts"]
 }

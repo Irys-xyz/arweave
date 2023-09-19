@@ -12,6 +12,7 @@
     ],
     "exclude": [
         "**/__tests__/**/*",
-        "tests/**/*"
+        "tests/**/*",
+        "src/web/webpack.ts"
     ]
 }

@@ -1,10 +1,11 @@
-import Arweave from "../../src/common/arweave";
+// import Arweave from "../../src/common/arweave";
 import type { CreateTransactionInterface } from "../../src/common";
 import type { JWKInterface } from "../../src/common/lib/wallet";
 import { createReadStream } from "fs";
 import { readFile } from "fs/promises";
 import { pipeline } from "stream/promises";
-import { createTransactionAsync } from "../../src/common/lib/stream/create-transaction-async";
+// import { createTransactionAsync } from "../../src/common/lib/stream/create-transaction-async";
+import { arweave } from "../_arweave";
 
 describe("createTransactionAsync", () => {
   let wallet: JWKInterface;
@@ -13,20 +14,12 @@ describe("createTransactionAsync", () => {
     wallet = await arweave.wallets.generate();
   });
 
-  const arweave = new Arweave({
-    host: "arweave.net",
-    protocol: "https",
-    port: 443,
-    logging: false,
-    timeout: 15000,
-  });
-
   it("should successfully create a transactions", async () => {
     const filePath = "./tests/fixtures/small-file.enc";
 
     const fileStream = createReadStream(filePath);
 
-    const tx = await pipeline(fileStream, createTransactionAsync({}, arweave, wallet));
+    const tx = await pipeline(fileStream, arweave.stream.createTransactionAsync({}, wallet));
     expect(tx.last_tx).toBeTruthy();
     expect(tx.owner).toBeTruthy();
 
@@ -52,7 +45,7 @@ describe("createTransactionAsync", () => {
     const nativeTx = await arweave.createTransaction({ ...txAttrs, data: await readFile(filePath) }, wallet);
     await arweave.transactions.sign(nativeTx, wallet);
 
-    const tx = await pipeline(fileStream, createTransactionAsync(txAttrs, arweave, wallet));
+    const tx = await pipeline(fileStream, arweave.stream.createTransactionAsync(txAttrs, wallet));
     await arweave.transactions.sign(tx, wallet);
 
     // Reset the data field from the `arweave-js` transaction as streamed transactions will not have this field.

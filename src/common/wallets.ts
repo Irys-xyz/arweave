@@ -2,14 +2,16 @@ import type Api from "./lib/api";
 import type CryptoInterface from "./lib/crypto/crypto-interface";
 import type { JWKInterface } from "./lib/wallet";
 import * as ArweaveUtils from "./lib/utils";
-import "arconnect";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type * as _ from "arconnect";
+import type FallbackApi from "./lib/fallbackApi";
 
 export default class Wallets {
-  private api: Api;
+  private api: Api | FallbackApi;
 
   private crypto: CryptoInterface;
 
-  constructor(api: Api, crypto: CryptoInterface) {
+  constructor(api: Api | FallbackApi, crypto: CryptoInterface) {
     this.api = api;
     this.crypto = crypto;
   }
@@ -55,7 +57,7 @@ export default class Wallets {
     });
   }
 
-  public generate() {
+  public generate(): Promise<JWKInterface> {
     return this.crypto.generateJWK();
   }
 

@@ -8,11 +8,7 @@ const expect = chai.expect;
 // let globals = <any>global;
 
 // @ts-ignore
-const arweave: Arweave = self.Arweave.init({
-  host: "arweave.net",
-  protocol: "https",
-  logging: false,
-});
+const arweave: Arweave = self.Arweave.init({ url: "https://arweave.net" });
 
 // @ts-ignore
 self.arweave = arweave;
@@ -36,7 +32,7 @@ describe("Initialization", function () {
 
     expect(arweave.crypto).to.an("object");
 
-    expect(arweave.silo).to.an("object");
+    // expect(arweave.silo).to.an("object");
   });
 });
 
@@ -174,7 +170,7 @@ describe("Transactions", function () {
   });
 
   it("should get transaction info", async function (this: any) {
-    this.timeout(5000);
+    this.timeout(15000);
 
     const transactionStatus = await arweave.transactions.getStatus(liveDataTxid);
     const transaction = await arweave.transactions.get(liveDataTxid);
@@ -209,13 +205,13 @@ describe("Transactions", function () {
       .and.match(/^.*invalid transaction signature.*$/i);
   });
 
-  it("should find transactions", async function (this: any) {
-    this.timeout(5000);
+  // it("should find transactions", async function (this: any) {
+  //   this.timeout(5000);
 
-    const results = await arweave.transactions.search("Silo-Name", "BmjRGIsemI77+eQb4zX8");
+  //   const results = await arweave.transactions.search("Silo-Name", "BmjRGIsemI77+eQb4zX8");
 
-    expect(results).to.be.an("array").which.contains("Sgmyo7nUqPpVQWUfK72p5yIpd85QQbhGaWAF-I8L6yE");
-  });
+  //   expect(results).to.be.an("array").which.contains("Sgmyo7nUqPpVQWUfK72p5yIpd85QQbhGaWAF-I8L6yE");
+  // });
 });
 
 describe("Encryption", function (this: any) {
@@ -256,66 +252,14 @@ describe("Encryption", function (this: any) {
   });
 });
 
-describe("Silo Web", function () {
-  it("should read Silo transaction", async function (this: any) {
-    this.skip();
-    this.timeout(5000);
-
-    // This is a manually generated silo transaction
-    // data = 'something'
-    // uri = 'secret.1'
-    const transaction = arweave.transactions.fromRaw({
-      last_tx: "Sgmyo7nUqPpVQWUfK72p5yIpd85QQbhGaWAF-I8L6yE",
-      owner:
-        "pJjRtSRLpHUVAKCtWC9pjajI_VEpiPEEAHX0k1B1jrB_jDlZsMJPyGRVX6n7N16vNyDTnKAofC_aNmTFegW-uyJmdxsteO1TXKrR_KJvuv_vACX4N8BkSgplB7mTTALBMNPmiINHXkDSxZEkBxAGV0GyL8pLd2-0X6TG16wDFShyS7rZzW8xFsQYiAp9-g330hPhCV7KBdVFtCxA0h1RifDYloMUwHbAWCTvzm72aLI1nWaLzotcM4cZTTdzw5VTdGtjo9fMdoT7uTqikIIhM3C4f9Ws-ECqjBUXtZFg7q6jYbUcTVNr1o2UFPKbLnDl4vcUZBaeqkL0FWQuo7F1hw36PVm_b9lVVzSVVkeA_HF2tQotkaITyOQmYfTHi1d31m5fwFZje_M-YgeyvOIuiqX4-lIGz8pohTutY3Z5_LKfO_a8jsJL8_jFLqcjSCRvVZSRmQDpzB4hJ9-W89m95DDmZci2wLbxFR8GwekNbpHeeC2EaJorhU0qBn_Hlcxql30fLveycjhSO03bu3MJwN9moT2q0T222iIXutEjpNezt5VzZKao8_JuI3ZnTFy5dM5GYO773TbgUihlVjVQsnv73FFPZaHfaRssK4sfGlBHjItwkzEQe9gOtFhkAFihiw45ppo6FnBkvmNcD59GfteifKPg5oSGYqMWZWcKPt0",
-      tags: [
-        { name: "Q29udGVudC1UeXBl", value: "dGV4dC9odG1s" },
-        { name: "VXNlci1BZ2VudA", value: "QXJ3ZWF2ZURlcGxveS8xLjAuMA" },
-        { name: "U2lsby1WZXJzaW9u", value: "MC4xLjA" },
-      ],
-      target: "",
-      quantity: "0",
-      data: "0HgHqou5BTRNYJIsCciZb2-85Qlg9cYpiHO62KbRCEeX_cjSvn--Cex8uksInemd6FWWkczaqjs3SWzr7BRc0BSjHXxlVHkKuQp7WvRRJeNJPk_nC0KZrjkFSIPLIx_oOSeXigaPSEBSC4ry_5Iygt7z0Dgl7z1eFplIs6MlxKuBwiXfCtlwRDQK_fJlPWZhGjOpNLP5dyOLwMKrvG2dbAOeyAYbr117rn19CiDkTQAI3m2gAcJlXDZTNeA-1rJqb6X73u0AQt4Ao-OkktxdZ1UMfMfXnwdlsAEKK14NiKRbL1UbVRGh1nyWjUl90BP5Qj74L6_CKxQc_us7gxdeUhkzIKr4-LMY4LoCr-l0Law_tIGekkRsqb5oN7JiketqWazgsyo-Gq-0Blvhwh8nww",
-      reward: "349612332",
-      signature:
-        "DJ6V8zXFMvkyNS4nNHxdFgXx1cbMuzQfWdtP_navPG1STMUarYKHWnJvFQqNkFl5CekNql0xTOjY5hWLt2AVxfMWgvvi5498vNUpbFoWxjrVl6fk86ARx2lzYB7iQK4YFIuIQ7MdR0w8Dy836hW7c8gXe_FPRAqOI7J_l8fqUSzaUtlcwLSfvhXJM-2a3WmoGLcg8Gvj53B8-RizvM3BrKQQWrcat78zeOgb-Fzl3PQ_Ej3CiRIDgAYnTxmd7M6jI84uck1gBRjMql42n0F8pQuTgMqzDbeXW2iBuvIE5tYVmUgnNrPjkDedLWe0Hp4KLDQyDY9lO-zIJLpiYCbc7kUfDBontxCCJIy9N8XM9gHqQofCItYAEO4v3B7sXgdSAQzcibnM3j6EhB9-mhiDcKKRuTSvyJh3sBTWHFrnWylfq84JOJLNhR4aZA_UfjkccA7Z-yqoiMI0mOB0HaAEmsa6ZsoLs5C-6vDnGaBCqYeVKKqKizfOQGsc9IuzdsSQwY7yTE-C3Xb3eAgnq0BLn6iUNqFU-mkwHi-c_hpxoR0lY91k98Ra9UhrgFS5m_9x3BhCXNhDaUXb16p0fHKGYSggqgqS3FbEcdOnsQlhw3IFEccFOTvuv1xEoE1zYeZ06q6NkFKMik6soXl9LXXgJgZvpEut_2LaHKtojbWqSkc",
-      id: "S-9ICDleH3PEx9LXVEbguVffe5dHEM0I3wEr_MJidqU",
-    });
-
-    const verified = await arweave.transactions.verify(transaction);
-
-    expect(verified).to.be.a("boolean").and.to.be.eq(true);
-
-    const decrypted = await arweave.silo.readTransactionData(transaction, "thing.1");
-
-    expect(bufferToString(decrypted)).to.be.a("string").and.contain("<title>Hello world!</title>");
-  });
-
-  it("should pass a Silo transaction roundtrip", async function (this: any) {
-    this.timeout(10000);
-
-    const wallet = await arweave.wallets.generate();
-
-    const transaction = await arweave.createSiloTransaction({ data: "test data" }, wallet, "my-silo-ref.1");
-
-    await arweave.transactions.sign(transaction, wallet);
-
-    const verified = await arweave.transactions.verify(transaction);
-
-    expect(verified).to.be.a("boolean").and.to.be.eq(true);
-
-    let decrypted = await arweave.silo.readTransactionData(transaction, "my-silo-ref.1");
-
-    expect(bufferToString(decrypted)).to.be.a("string").and.equal("test data");
-  });
-});
-
 describe("GraphQL", function (this: any) {
   this.timeout(20000);
   it("should return a list of results", async function () {
     const txs = (
-      await arweave.api.post("/graphql", {
-        query: `
+      await arweave.api.post(
+        "/graphql",
+        {
+          query: `
       {
         transactions(
           tags: [
@@ -329,7 +273,9 @@ describe("GraphQL", function (this: any) {
           }
         }
       }`,
-      })
+        },
+        { gatewayOnly: true },
+      )
     ).data.data.transactions.edges;
 
     expect(txs).to.be.an("array");

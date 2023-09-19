@@ -1,5 +1,7 @@
-// @ts-expect-error no typing
-import * as asn from "asn1.js";
+// @ts-expect-error no typing :c
+import api from "asn1.js/lib/asn1/api";
+const define = api.define;
+import bn from "bn.js";
 
 function urlize(base64: string): string {
   return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
@@ -9,30 +11,30 @@ function hex2b64url(str: string): string {
   return urlize(Buffer.from(str, "hex").toString("base64"));
 }
 
-const RSAPublicKey = asn.define("RSAPublicKey", function (this: any) {
+const RSAPublicKey = define("RSAPublicKey", function (this: any) {
   this.seq().obj(this.key("n").int(), this.key("e").int());
 });
 
-const AlgorithmIdentifier = asn.define("AlgorithmIdentifier", function (this: any) {
+const AlgorithmIdentifier = define("AlgorithmIdentifier", function (this: any) {
   this.seq().obj(this.key("algorithm").objid(), this.key("parameters").optional().any());
 });
 
-const PublicKeyInfo = asn.define("PublicKeyInfo", function (this: any) {
+const PublicKeyInfo = define("PublicKeyInfo", function (this: any) {
   this.seq().obj(this.key("algorithm").use(AlgorithmIdentifier), this.key("publicKey").bitstr());
 });
 
-const Version = asn.define("Version", function (this: any) {
+const Version = define("Version", function (this: any) {
   this.int({
     0: "two-prime",
     1: "multi",
   });
 });
 
-const OtherPrimeInfos = asn.define("OtherPrimeInfos", function (this: any) {
+const OtherPrimeInfos = define("OtherPrimeInfos", function (this: any) {
   this.seq().obj(this.key("ri").int(), this.key("di").int(), this.key("ti").int());
 });
 
-const RSAPrivateKey = asn.define("RSAPrivateKey", function (this: any) {
+const RSAPrivateKey = define("RSAPrivateKey", function (this: any) {
   this.seq().obj(
     this.key("version").use(Version),
     this.key("n").int(),
@@ -47,7 +49,7 @@ const RSAPrivateKey = asn.define("RSAPrivateKey", function (this: any) {
   );
 });
 
-const PrivateKeyInfo = asn.define("PrivateKeyInfo", function (this: any) {
+const PrivateKeyInfo = define("PrivateKeyInfo", function (this: any) {
   this.seq().obj(this.key("version").use(Version), this.key("algorithm").use(AlgorithmIdentifier), this.key("privateKey").bitstr());
 });
 
@@ -135,12 +137,12 @@ function bn2base64url(bn: any): any {
 }
 
 function base64url2bn(str: string): any {
-  return new asn.bignum(Buffer.from(str, "base64"));
+  return new bn(Buffer.from(str, "base64"));
 }
 
 function string2bn(str: string): any {
   if (/^[0-9]+$/.test(str)) {
-    return new asn.bignum(str, 10);
+    return new bn(str, 10);
   }
   return base64url2bn(str);
 }

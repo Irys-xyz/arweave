@@ -1,4 +1,5 @@
 import type Api from "./lib/api";
+import type FallbackApi from "./lib/fallbackApi";
 
 export type NetworkInfoInterface = {
   network: string;
@@ -12,12 +13,12 @@ export type NetworkInfoInterface = {
   node_state_latency: number;
 };
 
-export type PeerList = {} & string[];
+export type PeerList = string[];
 
 export default class Network {
-  private api: Api;
+  private api: Api | FallbackApi;
 
-  constructor(api: Api) {
+  constructor(api: Api | FallbackApi) {
     this.api = api;
   }
 

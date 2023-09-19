@@ -1,30 +1,43 @@
-import Arweave from "../arweave";
+import type { stringToBuffer, concatBuffers } from "./utils";
+import type CryptoInterface from "./crypto/crypto-interface";
 
 // In TypeScript 3.7, could be written as a single type:
 // `type DeepHashChunk = Uint8Array | DeepHashChunk[];`
 type DeepHashChunk = Uint8Array | DeepHashChunks;
-type DeepHashChunks = {} & DeepHashChunk[];
+type DeepHashChunks = object & DeepHashChunk[];
 
-export default async function deepHash(data: DeepHashChunk): Promise<Uint8Array> {
-  if (Array.isArray(data)) {
-    const tag = Arweave.utils.concatBuffers([Arweave.utils.stringToBuffer("list"), Arweave.utils.stringToBuffer(data.length.toString())]);
+type DeepHashDeps = {
+  utils: { stringToBuffer: typeof stringToBuffer; concatBuffers: typeof concatBuffers };
+  crypto: Pick<CryptoInterface, "hash">;
+};
 
-    return await deepHashChunks(data, await Arweave.crypto.hash(tag, "SHA-384"));
+export class DeepHash {
+  protected crypto: DeepHashDeps["crypto"];
+  protected utils: DeepHashDeps["utils"];
+
+  constructor({ deps }: { deps: { utils: DeepHashDeps["utils"]; crypto: DeepHashDeps["crypto"] } }) {
+    this.crypto = deps.crypto;
+    this.utils = deps.utils;
   }
 
-  const tag = Arweave.utils.concatBuffers([Arweave.utils.stringToBuffer("blob"), Arweave.utils.stringToBuffer(data.byteLength.toString())]);
+  public async deepHash(data: DeepHashChunk): Promise<Uint8Array> {
+    if (Array.isArray(data)) {
+      const tag = this.utils.concatBuffers([this.utils.stringToBuffer("list"), this.utils.stringToBuffer(data.length.toString())]);
 
-  const taggedHash = Arweave.utils.concatBuffers([await Arweave.crypto.hash(tag, "SHA-384"), await Arweave.crypto.hash(data, "SHA-384")]);
+      return await this.deepHashChunks(data, await this.crypto.hash(tag, "SHA-384"));
+    }
 
-  return await Arweave.crypto.hash(taggedHash, "SHA-384");
-}
+    const tag = this.utils.concatBuffers([this.utils.stringToBuffer("blob"), this.utils.stringToBuffer(data.byteLength.toString())]);
 
-async function deepHashChunks(chunks: DeepHashChunks, acc: Uint8Array): Promise<Uint8Array> {
-  if (chunks.length < 1) {
-    return acc;
+    const taggedHash = this.utils.concatBuffers([await this.crypto.hash(tag, "SHA-384"), await this.crypto.hash(data, "SHA-384")]);
+
+    return await this.crypto.hash(taggedHash, "SHA-384");
   }
 
-  const hashPair = Arweave.utils.concatBuffers([acc, await deepHash(chunks[0])]);
-  const newAcc = await Arweave.crypto.hash(hashPair, "SHA-384");
-  return await deepHashChunks(chunks.slice(1), newAcc);
+  public async deepHashChunks(chunks: DeepHashChunks, acc: Uint8Array): Promise<Uint8Array> {
+    if (chunks.length < 1) return acc;
+    const hashPair = this.utils.concatBuffers([acc, await this.deepHash(chunks[0])]);
+    const newAcc = await this.crypto.hash(hashPair, "SHA-384");
+    return await this.deepHashChunks(chunks.slice(1), newAcc);
+  }
 }

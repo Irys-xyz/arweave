@@ -1,7 +1,9 @@
+/* eslint-disable no-case-declarations */
 import * as ArweaveUtils from "./utils";
-import deepHash from "./deepHash";
+import type { DeepHash } from "./deepHash";
 import type { Chunk, Proof } from "./merkle";
-import { generateTransactionChunks } from "./merkle";
+import type { Merkle } from "./merkle";
+import { b64UrlToBuffer, bufferTob64Url } from "./utils";
 
 class BaseObject {
   [key: string]: any;
@@ -56,7 +58,7 @@ class BaseObject {
   }
 }
 
-export class Tag extends BaseObject {
+export class ArweaveTag extends BaseObject {
   readonly name: string;
   readonly value: string;
 
@@ -66,6 +68,7 @@ export class Tag extends BaseObject {
     this.value = value;
   }
 }
+export type Tag = { name: string; value: string };
 
 export type TransactionInterface = {
   format: number;
@@ -96,6 +99,8 @@ export default class Transaction extends BaseObject implements TransactionInterf
   public reward = "0";
   public signature = "";
 
+  protected merkle: Merkle;
+  protected deepHash: DeepHash;
   // Computed when needed.
   public chunks?: {
     data_root: Uint8Array;
@@ -103,8 +108,10 @@ export default class Transaction extends BaseObject implements TransactionInterf
     proofs: Proof[];
   };
 
-  public constructor(attributes: Partial<TransactionInterface> = {}) {
+  public constructor({ attributes, deps }: { attributes: Partial<TransactionInterface>; deps: { merkle: Merkle; deepHash: DeepHash } }) {
     super();
+    this.merkle = deps.merkle;
+    this.deepHash = deps.deepHash;
     Object.assign(this, attributes);
 
     // If something passes in a Tx that has been toJSON'ed and back,
@@ -115,17 +122,31 @@ export default class Transaction extends BaseObject implements TransactionInterf
     }
 
     if (attributes.tags) {
-      this.tags = attributes.tags.map((tag: { name: string; value: string }) => {
+      this.tags = attributes.tags /* .map((tag: { name: string; value: string }) => {
         return new Tag(tag.name, tag.value);
-      });
+      }) */;
     }
   }
 
-  public addTag(name: string, value: string) {
-    this.tags.push(new Tag(ArweaveUtils.stringToB64Url(name), ArweaveUtils.stringToB64Url(value)));
+  public addTag(name: string, value: string): void {
+    this.tags.push({ name: ArweaveUtils.stringToB64Url(name), value: ArweaveUtils.stringToB64Url(value) });
   }
 
-  public toJSON() {
+  public toJSON(): {
+    format: number;
+    id: string;
+    last_tx: string;
+    owner: string;
+    tags: Tag[];
+    target: string;
+    quantity: string;
+    data: string;
+    data_size: string;
+    data_root: string;
+    data_tree: any;
+    reward: string;
+    signature: string;
+  } {
     return {
       format: this.format,
       id: this.id,
@@ -143,11 +164,11 @@ export default class Transaction extends BaseObject implements TransactionInterf
     };
   }
 
-  public setOwner(owner: string) {
+  public setOwner(owner: string): void {
     this.owner = owner;
   }
 
-  public setSignature({ id, owner, reward, tags, signature }: { id: string; owner: string; reward?: string; tags?: Tag[]; signature: string }) {
+  public setSignature({ id, owner, reward, tags, signature }: { id: string; owner: string; reward?: string; tags?: Tag[]; signature: string }): void {
     this.id = id;
     this.owner = owner;
     if (reward) this.reward = reward;
@@ -155,7 +176,7 @@ export default class Transaction extends BaseObject implements TransactionInterf
     this.signature = signature;
   }
 
-  public async prepareChunks(data: Uint8Array) {
+  public async prepareChunks(data: Uint8Array): Promise<void> {
     // Note: we *do not* use `this.data`, the caller may be
     // operating on a transaction with an zero length data field.
     // This function computes the chunks for the data passed in and
@@ -163,8 +184,8 @@ export default class Transaction extends BaseObject implements TransactionInterf
     // data *from* this transaction.
 
     if (!this.chunks && data.byteLength > 0) {
-      this.chunks = await generateTransactionChunks(data);
-      this.data_root = ArweaveUtils.bufferTob64Url(this.chunks.data_root);
+      this.chunks = await this.merkle.generateTransactionChunks(data);
+      this.data_root = bufferTob64Url(this.chunks.data_root);
     }
 
     if (!this.chunks && data.byteLength === 0) {
@@ -180,7 +201,16 @@ export default class Transaction extends BaseObject implements TransactionInterf
   // Returns a chunk in a format suitable for posting to /chunk.
   // Similar to `prepareChunks()` this does not operate `this.data`,
   // instead using the data passed in.
-  public getChunk(idx: number, data: Uint8Array) {
+  public getChunk(
+    idx: number,
+    data: Uint8Array,
+  ): {
+    data_root: string;
+    data_size: string;
+    data_path: string;
+    offset: string;
+    chunk: string;
+  } {
     if (!this.chunks) {
       throw new Error(`Chunks have not been prepared`);
     }
@@ -199,11 +229,7 @@ export default class Transaction extends BaseObject implements TransactionInterf
     switch (this.format) {
       case 1:
         const tags = this.tags.reduce((accumulator: Uint8Array, tag: Tag) => {
-          return ArweaveUtils.concatBuffers([
-            accumulator,
-            tag.get("name", { decode: true, string: false }),
-            tag.get("value", { decode: true, string: false }),
-          ]);
+          return ArweaveUtils.concatBuffers([accumulator, b64UrlToBuffer(tag.name), b64UrlToBuffer(tag.value)]);
         }, new Uint8Array());
 
         return ArweaveUtils.concatBuffers([
@@ -220,12 +246,9 @@ export default class Transaction extends BaseObject implements TransactionInterf
           await this.prepareChunks(this.data);
         }
 
-        const tagList: [Uint8Array, Uint8Array][] = this.tags.map((tag) => [
-          tag.get("name", { decode: true, string: false }),
-          tag.get("value", { decode: true, string: false }),
-        ]);
+        const tagList: [Uint8Array, Uint8Array][] = this.tags.map((tag) => [b64UrlToBuffer(tag.name), b64UrlToBuffer(tag.value)]);
 
-        return await deepHash([
+        return await this.deepHash.deepHash([
           ArweaveUtils.stringToBuffer(this.format.toString()),
           this.get("owner", { decode: true, string: false }),
           this.get("target", { decode: true, string: false }),

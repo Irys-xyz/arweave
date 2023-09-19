@@ -5,7 +5,7 @@ const config = {};
 
 config.web = {
   name: "web",
-  entry: "./build/esm/web/index.js",
+  entry: "./build/esm/web/bundle.js",
   mode: "development",
   target: "web",
   devtool: "inline-source-map",
@@ -16,6 +16,7 @@ config.web = {
     alias: {
       // process: "process/browser",
       crypto: "crypto-browserify",
+      "stream/promises": path.resolve(__dirname, "node_modules/readable-stream/lib/stream/promises.js"),
       stream: "stream-browserify",
       "$/utils": path.resolve(__dirname, "./build/esm/web/utils"),
     },
@@ -34,14 +35,17 @@ config.web = {
   output: {
     filename: "web.bundle.js",
     path: path.resolve(__dirname, "build"),
+    // libraryTarget: "umd",
+    // library: "Arweave",
   },
 };
 
 config.webprod = {
   name: "web-prod",
-  entry: "./build/esm/web/index.js",
+  entry: "./build/esm/web/bundle.js",
   mode: "production",
   target: "web",
+  devtool: "source-map",
   devServer: {
     contentBase: "./dist",
   },
@@ -49,6 +53,7 @@ config.webprod = {
     alias: {
       // process: "process/browser",
       crypto: "crypto-browserify",
+      "stream/promises": path.resolve(__dirname, "node_modules/readable-stream/lib/stream/promises.js"),
       stream: "stream-browserify",
       "$/utils": path.resolve(__dirname, "./build/esm/web/utils"),
     },
@@ -71,6 +76,8 @@ config.webprod = {
   output: {
     filename: "web.bundle.min.js",
     path: path.resolve(__dirname, "build"),
+    // libraryTarget: "umd",
+    // library: "Arweave",
   },
 };
 
@@ -91,6 +98,7 @@ config.webtests = {
     extensions: [".tsx", ".ts", ".js"],
     alias: {
       // process: "process/browser",
+      "stream/promises": path.resolve(__dirname, "node_modules/readable-stream/lib/stream/promises.js"),
       "$/utils": path.resolve(__dirname, "./build/esm/web/utils"),
     },
     fallback: {
@@ -115,6 +123,8 @@ config.webtests = {
   output: {
     filename: "webtests.bundle.js",
     path: path.resolve(__dirname, "build"),
+    // libraryTarget: "umd",
+    // library: "Arweave",
   },
 };
 

@@ -1,11 +1,9 @@
-import * as B64js from "base64-js";
+import { fromByteArray, toByteArray } from "base64-js";
+import BigNumber from "bignumber.js";
 
 export type Base64UrlString = string;
 
 export function concatBuffers(buffers: Uint8Array[] | ArrayBuffer[]): Uint8Array {
-  // below has a type issue, due to the union type (??!!)
-  // const totalLength = buffers.reduce((acc, buf) => (acc += buf.byteLength), 0);
-
   let totalLength = 0;
   for (const b of buffers) totalLength += b.byteLength;
 
@@ -42,11 +40,11 @@ export function stringToB64Url(string: string): string {
 }
 
 export function b64UrlToBuffer(b64UrlString: string): Uint8Array {
-  return new Uint8Array(B64js.toByteArray(b64UrlDecode(b64UrlString)));
+  return new Uint8Array(toByteArray(b64UrlDecode(b64UrlString)));
 }
 
 export function bufferTob64(buffer: Uint8Array): string {
-  return B64js.fromByteArray(new Uint8Array(buffer));
+  return fromByteArray(new Uint8Array(buffer));
 }
 
 export function bufferTob64Url(buffer: Uint8Array): string {
@@ -62,4 +60,12 @@ export function b64UrlDecode(b64UrlString: string): string {
   let padding;
   b64UrlString.length % 4 == 0 ? (padding = 0) : (padding = 4 - (b64UrlString.length % 4));
   return b64UrlString.concat("=".repeat(padding));
+}
+
+export function winstonToAr(winston: BigNumber.Value): BigNumber {
+  return new BigNumber(winston).shiftedBy(-12);
+}
+
+export function arToWinston(ar: BigNumber.Value): BigNumber {
+  return new BigNumber(ar).shiftedBy(12);
 }

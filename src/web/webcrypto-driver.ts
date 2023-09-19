@@ -1,7 +1,7 @@
 import type { JWKInterface, JWKPublicInterface } from "../common/lib/wallet";
 import type { SignatureOptions } from "../common/lib/crypto/crypto-interface";
 import type CryptoInterface from "../common/lib/crypto/crypto-interface";
-import * as ArweaveUtils from "../common/lib/utils";
+import { concatBuffers, stringToBuffer } from "../common/lib/utils";
 
 export default class WebCryptoDriver implements CryptoInterface {
   public readonly keyLength = 4096;
@@ -10,11 +10,7 @@ export default class WebCryptoDriver implements CryptoInterface {
   public readonly driver: SubtleCrypto;
 
   constructor() {
-    if (!this.detectWebCrypto()) {
-      throw new Error("SubtleCrypto not available!");
-    }
-
-    this.driver = crypto.subtle;
+    this.driver = crypto?.subtle;
   }
 
   public async generateJWK(): Promise<JWKInterface> {
@@ -140,22 +136,22 @@ export default class WebCryptoDriver implements CryptoInterface {
     );
   }
 
-  private detectWebCrypto() {
-    if (typeof crypto === "undefined") {
-      return false;
-    }
-    const subtle = crypto?.subtle;
-    if (subtle === undefined) {
-      return false;
-    }
-    const names = ["generateKey", "importKey", "exportKey", "digest", "sign"] as const;
-    return names.every((name) => typeof subtle[name] === "function");
-  }
+  // private detectWebCrypto() {
+  //   if (typeof crypto === "undefined") {
+  //     return false;
+  //   }
+  //   const subtle = crypto?.subtle;
+  //   if (subtle === undefined) {
+  //     return false;
+  //   }
+  //   const names = ["generateKey", "importKey", "exportKey", "digest", "sign"] as const;
+  //   return names.every((name) => typeof subtle[name] === "function");
+  // }
 
   public async encrypt(data: Buffer, key: string | Buffer, salt?: string): Promise<Uint8Array> {
     const initialKey = await this.driver.importKey(
       "raw",
-      typeof key === "string" ? ArweaveUtils.stringToBuffer(key) : key,
+      typeof key === "string" ? stringToBuffer(key) : key,
       {
         name: "PBKDF2",
         length: 32,
@@ -171,7 +167,7 @@ export default class WebCryptoDriver implements CryptoInterface {
     const derivedkey = await this.driver.deriveKey(
       {
         name: "PBKDF2",
-        salt: salt ? ArweaveUtils.stringToBuffer(salt) : ArweaveUtils.stringToBuffer("salt"),
+        salt: salt ? stringToBuffer(salt) : stringToBuffer("salt"),
         iterations: 100000,
         hash: "SHA-256",
       },
@@ -197,13 +193,13 @@ export default class WebCryptoDriver implements CryptoInterface {
       data,
     );
 
-    return ArweaveUtils.concatBuffers([iv, encryptedData]);
+    return concatBuffers([iv, encryptedData]);
   }
 
   public async decrypt(encrypted: Buffer, key: string | Buffer, salt?: string): Promise<Uint8Array> {
     const initialKey = await this.driver.importKey(
       "raw",
-      typeof key === "string" ? ArweaveUtils.stringToBuffer(key) : key,
+      typeof key === "string" ? stringToBuffer(key) : key,
       {
         name: "PBKDF2",
         length: 32,
@@ -217,7 +213,7 @@ export default class WebCryptoDriver implements CryptoInterface {
     const derivedkey = await this.driver.deriveKey(
       {
         name: "PBKDF2",
-        salt: salt ? ArweaveUtils.stringToBuffer(salt) : ArweaveUtils.stringToBuffer("salt"),
+        salt: salt ? stringToBuffer(salt) : stringToBuffer("salt"),
         iterations: 100000,
         hash: "SHA-256",
       },
@@ -242,6 +238,6 @@ export default class WebCryptoDriver implements CryptoInterface {
     );
 
     // We're just using concat to convert from an array buffer to uint8array
-    return ArweaveUtils.concatBuffers([data]);
+    return concatBuffers([data]);
   }
 }

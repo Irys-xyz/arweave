@@ -2,7 +2,7 @@ import type Api from "./lib/api";
 import type { SignatureOptions } from "./lib/crypto/crypto-interface";
 import type CryptoInterface from "./lib/crypto/crypto-interface";
 import ArweaveError, { ArweaveErrorType } from "./lib/error";
-import Transaction from "./lib/transaction";
+import Transaction, { ArweaveTag } from "./lib/transaction";
 import * as ArweaveUtils from "./lib/utils";
 import type { JWKInterface } from "./lib/wallet";
 import type { SerializedUploader } from "./lib/transaction-uploader";
@@ -10,6 +10,10 @@ import { TransactionUploader } from "./lib/transaction-uploader";
 import type Chunks from "./chunks";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type * as _ from "arconnect";
+import type FallbackApi from "./lib/fallbackApi";
+import type Merkle from "./lib/merkle";
+import type { DeepHash } from "./lib/deepHash";
+import { Readable } from "stream";
 declare const arweaveWallet: Window["arweaveWallet"];
 
 export type TransactionConfirmedData = {
@@ -23,16 +27,20 @@ export type TransactionStatusResponse = {
 };
 
 export default class Transactions {
-  private api: Api;
+  private api: Api | FallbackApi;
 
   private crypto: CryptoInterface;
 
   private chunks: Chunks;
+  protected merkle: Merkle;
+  protected deepHash: DeepHash;
 
-  constructor(api: Api, crypto: CryptoInterface, chunks: Chunks) {
-    this.api = api;
-    this.crypto = crypto;
-    this.chunks = chunks;
+  constructor({ deps }: { deps: { crypto: CryptoInterface; api: Api | FallbackApi; chunks: Chunks; merkle: Merkle; deepHash: DeepHash } }) {
+    this.api = deps.api;
+    this.crypto = deps.crypto;
+    this.chunks = deps.chunks;
+    this.merkle = deps.merkle;
+    this.deepHash = deps.deepHash;
   }
 
   public getTransactionAnchor(): Promise<string> {
@@ -79,21 +87,27 @@ export default class Transactions {
       if (response.data.format >= 2 && data_size > 0 && data_size <= 1024 * 1024 * 12) {
         const data = await this.getData(id);
         return new Transaction({
-          ...response.data,
-          data,
+          attributes: {
+            ...response.data,
+            data,
+          },
+          deps: { merkle: this.merkle, deepHash: this.deepHash },
         });
       }
       return new Transaction({
-        ...response.data,
-        format: response.data.format || 1,
+        attributes: {
+          ...response.data,
+          format: response.data.format || 1,
+        },
+        deps: { merkle: this.merkle, deepHash: this.deepHash },
       });
     }
 
-    if (response.status == 404) {
+    if (response.status === 404) {
       throw new ArweaveError(ArweaveErrorType.TX_NOT_FOUND);
     }
 
-    if (response.status == 410) {
+    if (response.status === 410) {
       throw new ArweaveError(ArweaveErrorType.TX_FAILED);
     }
 
@@ -101,27 +115,12 @@ export default class Transactions {
   }
 
   public fromRaw(attributes: object): Transaction {
-    return new Transaction(attributes);
-  }
-
-  public async search(tagName: string, tagValue: string): Promise<string[]> {
-    return this.api
-      .post(`arql`, {
-        op: "equals",
-        expr1: tagName,
-        expr2: tagValue,
-      })
-      .then((response) => {
-        if (!response.data) {
-          return [];
-        }
-        return response.data;
-      });
+    return new Transaction({ attributes, deps: { merkle: this.merkle, deepHash: this.deepHash } });
   }
 
   public getStatus(id: string): Promise<TransactionStatusResponse> {
     return this.api.get(`tx/${id}/status`).then((response) => {
-      if (response.status == 200) {
+      if (response.status === 200) {
         return {
           status: 200,
           confirmed: response.data,
@@ -134,28 +133,23 @@ export default class Transactions {
     });
   }
 
-  public async getData(
-    id: string,
-    options?: {
-      decode?: boolean;
-      string?: boolean;
-    },
-  ): Promise<string | Uint8Array> {
+  public async getData(id: string): Promise<Uint8Array> {
     let data: Uint8Array | undefined = undefined;
 
     try {
-      data = await this.chunks.downloadChunkedData(id);
+      data = (await this.api.get(`/${id}`, { responseType: "arraybuffer" })).data;
     } catch (error) {
-      console.error(`Error while trying to download chunked data for ${id}`);
+      console.error(`Error while trying to download contiguous data from gateway cache for ${id}`);
+
       console.error(error);
     }
 
     if (!data) {
-      console.warn(`Falling back to gateway cache for ${id}`);
+      console.warn(`Falling back to chunks for ${id}`);
       try {
-        data = (await this.api.get(`/${id}`, { responseType: "arraybuffer" })).data;
+        data = await this.chunks.downloadChunkedData(id);
       } catch (error) {
-        console.error(`Error while trying to download contiguous data from gateway cache for ${id}`);
+        console.error(`Error while trying to download chunked data for ${id}`);
         console.error(error);
       }
     }
@@ -164,12 +158,35 @@ export default class Transactions {
       throw new Error(`${id} data was not found!`);
     }
 
-    if (options?.decode) {
-      return options?.string ? ArweaveUtils.bufferToString(data) : data;
+    return data;
+  }
+
+  public async getDataStream(id: string): Promise<Readable> {
+    let data: Readable | undefined = undefined;
+
+    try {
+      data = (await this.api.get(`/${id}`, { responseType: "stream" })).data;
+    } catch (error) {
+      console.error(`Error while trying to download contiguous data from gateway cache for ${id}`);
+      console.error(error);
     }
 
-    // Since decode wasn't requested, caller expects b64url encoded data.
-    return ArweaveUtils.bufferTob64Url(data);
+    if (!data) {
+      console.warn(`Falling back to chunks for ${id}`);
+      try {
+        const gen = this.chunks.concurrentChunkDownloader(id);
+        data = Readable.from(gen);
+      } catch (error) {
+        console.error(`Error while trying to download chunked data for ${id}`);
+        console.error(error);
+      }
+    }
+
+    if (!data) {
+      throw new Error(`${id} data was not found!`);
+    }
+
+    return data;
   }
 
   public async sign(
@@ -197,7 +214,9 @@ export default class Transactions {
         // Permission is already granted
       }
 
-      const signedTransaction = await arweaveWallet.sign(transaction, options);
+      // for external compatibility
+      transaction.tags = transaction.tags.map((v) => new ArweaveTag(v.name, v.value));
+      const signedTransaction = await arweaveWallet.sign(transaction as unknown as Parameters<typeof arweaveWallet.sign>["0"], options);
 
       transaction.setSignature({
         id: signedTransaction.id,
@@ -250,11 +269,11 @@ export default class Transactions {
 
   public async post(transaction: Transaction | Buffer | string | object): Promise<{ status: number; statusText: string; data: any }> {
     if (typeof transaction === "string") {
-      transaction = new Transaction(JSON.parse(transaction as string));
+      transaction = new Transaction({ attributes: JSON.parse(transaction as string), deps: { merkle: this.merkle, deepHash: this.deepHash } });
     } else if (typeof (transaction as any).readInt32BE === "function") {
-      transaction = new Transaction(JSON.parse(transaction.toString()));
+      transaction = new Transaction({ attributes: JSON.parse(transaction.toString()), deps: { merkle: this.merkle, deepHash: this.deepHash } });
     } else if (typeof transaction === "object" && !(transaction instanceof Transaction)) {
-      transaction = new Transaction(transaction as object);
+      transaction = new Transaction({ attributes: transaction as object, deps: { merkle: this.merkle, deepHash: this.deepHash } });
     }
 
     if (!(transaction instanceof Transaction)) {
@@ -309,7 +328,7 @@ export default class Transactions {
    * @param upload a Transaction object, a previously save progress object, or a transaction id.
    * @param data the data of the transaction. Required when resuming an upload.
    */
-  public async getUploader(upload: Transaction | SerializedUploader | string, data?: Uint8Array | ArrayBuffer) {
+  public async getUploader(upload: Transaction | SerializedUploader | string, data?: Uint8Array | ArrayBuffer): Promise<TransactionUploader> {
     let uploader!: TransactionUploader;
 
     if (data instanceof ArrayBuffer) {
@@ -329,7 +348,10 @@ export default class Transactions {
         await upload.prepareChunks(data);
       }
 
-      uploader = new TransactionUploader(this.api, upload);
+      uploader = new TransactionUploader({
+        transaction: upload,
+        deps: { api: this.api, crypto: this.crypto, merkle: this.merkle, deepHash: this.deepHash },
+      });
 
       if (!uploader.data || uploader.data.length === 0) {
         uploader.data = data;
@@ -344,7 +366,11 @@ export default class Transactions {
       }
 
       // upload should be a serialized upload.
-      uploader = await TransactionUploader.fromSerialized(this.api, upload, data);
+      uploader = await TransactionUploader.fromSerialized({
+        deps: { api: this.api, merkle: this.merkle, crypto: this.crypto, deepHash: this.deepHash },
+        serialized: upload,
+        data,
+      });
     }
 
     return uploader;
@@ -364,7 +390,10 @@ export default class Transactions {
    * @param upload a Transaction object, a previously save uploader, or a transaction id.
    * @param data the data of the transaction. Required when resuming an upload.
    */
-  public async *upload(upload: Transaction | SerializedUploader | string, data: Uint8Array) {
+  public async *upload(
+    upload: Transaction | SerializedUploader | string,
+    data: Uint8Array,
+  ): AsyncGenerator<TransactionUploader, TransactionUploader> {
     const uploader = await this.getUploader(upload, data);
 
     while (!uploader.isComplete) {
