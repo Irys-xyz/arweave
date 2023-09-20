@@ -1,50 +1,51 @@
 # Arweave JS 
 
-@irys/arweave is a JavaScript/TypeScript SDK for interacting with the Arweave network and uploading data to the permaweb. It works in latest browsers and Node JS.
+@irys/arweave is a JavaScript/TypeScript SDK for interacting with [Arweave](https://www.arweave.org/) and uploading data to the permaweb. It works in latest browsers and Node JS.
 
 > **Notes:** 
-> 1. If you are planning to upload large batches of data transactions to the Arweave network, it is strongly advised that you use [ArBundles](https://github.com/Bundler-Network/arbundles) instead of transactions with Arweave.js. You can read about bundles and their advantages on the [Arwiki](https://arwiki.wiki/#/en/bundles).
+> 1. If you are planning to upload large batches of data transactions to Arweave, it is strongly advised that you use [ArBundles](https://github.com/Bundler-Network/arbundles) instead of transactions with Arweave.js. You can read about bundles and their advantages on the [Arwiki](https://arwiki.wiki/#/en/bundles).
 <!-- > 2. When working with NodeJS a minimum version of 18+ is required, with some exceptions. See these [release notes](https://github.com/ArweaveTeam/arweave-js/releases/tag/v1.12.4) for more details. -->
 
 - [Arweave JS](#arweave-js)
-  - [Installation](#installation)
-    - [NPM](#npm)
-    - [Bundles](#bundles)
-  - [Initialisation](#initialisation)
-    - [NPM Node](#npm-node)
-    - [NPM Web](#npm-web)
-    - [Web Bundles](#web-bundles)
-    - [Initialisation options](#initialisation-options)
-  - [Usage](#usage)
-    - [Wallets and Keys](#wallets-and-keys)
-      - [Create a new wallet and private key](#create-a-new-wallet-and-private-key)
-      - [Get the wallet address for a private key](#get-the-wallet-address-for-a-private-key)
-      - [Get an address balance](#get-an-address-balance)
-      - [Get the last transaction ID from a wallet](#get-the-last-transaction-id-from-a-wallet)
-    - [Transactions](#transactions)
-      - [Create a data transaction](#create-a-data-transaction)
-      - [Create a wallet to wallet transaction](#create-a-wallet-to-wallet-transaction)
-      - [Add tags to a transaction](#add-tags-to-a-transaction)
-      - [Sign a transaction](#sign-a-transaction)
-      - [Submit a transaction](#submit-a-transaction)
-        - [Chunked uploading advanced options](#chunked-uploading-advanced-options)
-      - [Get a transaction status](#get-a-transaction-status)
-      - [Get a transaction](#get-a-transaction)
-      - [Get transaction data](#get-transaction-data)
-      - [Decode tags from transactions](#decode-tags-from-transactions)
-    - [Blocks](#blocks)  
-      - [Get a block by indep_hash](#get-a-block-by-indep_hash)
-      - [Get current block](#get-current-block)
-    - [GraphQL](#graphql)
-    - [License](#license)
+	- [Installation](#installation)
+		- [Npm](#npm)
+		- [Yarn](#yarn)
+		- [Bundles](#bundles)
+	- [Initialization](#initialization)
+		- [Web bundles](#web-bundles)
+		- [Initialization options](#initialization-options)
+	- [Usage](#usage)
+		- [Wallets and keys](#wallets-and-keys)
+			- [Creating a new wallet and private key](#creating-a-new-wallet-and-private-key)
+			- [Getting the wallet address for a private key](#getting-the-wallet-address-for-a-private-key)
+			- [Getting an address balance](#getting-an-address-balance)
+			- [Getting the last transaction Id from a wallet](#getting-the-last-transaction-id-from-a-wallet)
+		- [Transactions](#transactions)
+			- [Creating a data transaction](#creating-a-data-transaction)
+			- [Creating a wallet to wallet transaction](#creating-a-wallet-to-wallet-transaction)
+			- [Adding tags to a transaction](#adding-tags-to-a-transaction)
+			- [Signing a transaction](#signing-a-transaction)
+			- [Submitting a transaction](#submitting-a-transaction)
+				- [Chunked uploading advanced options](#chunked-uploading-advanced-options)
+		- [Streaming uploads](#streaming-uploads)
+			- [Getting transaction status](#getting-transaction-status)
+			- [Getting a transaction](#getting-a-transaction)
+			- [Getting transaction data](#getting-transaction-data)
+			- [Getting tags from transactions](#getting-tags-from-transactions)
+		- [Blocks](#blocks)
+			- [Getting a block by indep\_hash](#getting-a-block-by-indep_hash)
+			- [Getting block by height](#getting-block-by-height)
+			- [Getting current block](#getting-current-block)
+		- [GraphQL](#graphql)
+		- [License](#license)
 
 ## Installation
-### NPM
+### Npm
 ```bash
 npm install @irys/arweave
 ```
 
-### YARN
+### Yarn
 ```
 yarn add @irys/arweave
 ```
@@ -67,7 +68,7 @@ Single bundle file (web only - use the NPM method if using Node).
 ```
 
 
-## Initialisation
+## Initialization
 
 ```js
 const Arweave = require('@irys/arweave');
@@ -77,6 +78,7 @@ const arweave = new Arweave({url: "http://127.0.0.1:1984"})
 
 // Or to specify a gateway when running from NodeJS you might use
 const arweave =  new Arweave({url: "https://arweave.net"})
+
 // @irys/arweave includes a fallback capable request backend - requests can be specified to be gateway only or to try gateways and miners. requests are forwarded to hosts in the order you specify below, with gateways being used before miners if both can be used for a request.
 
 // Specify multiple gateways and multiple miners - will request arweave.net, arweave.dev, your-gateway, and the miners
@@ -84,7 +86,7 @@ const arweave = new Arweave(["https://arweave.net", "https://arweave.dev", "http
 ```
 
 
-### Web Bundles
+### Web bundles
 ```js
 <!DOCTYPE html>
 <html lang="en">
@@ -103,7 +105,7 @@ const arweave = new Arweave(["https://arweave.net", "https://arweave.dev", "http
 </html>
 ```
 
-### Initialisation options
+### Initialization options
 ```js
 (
     gateways: string, URL, or ApiConfig - Array or single item
@@ -118,15 +120,17 @@ const arweave = new Arweave(["https://arweave.net", "https://arweave.dev", "http
 
 ## Usage
 
-### Wallets and Keys
+### Wallets and keys
 
-#### Create a new wallet and private key
+#### Creating a new wallet and private key
 
-Here you can generate a new wallet address and private key ([JWK](https://docs.arweave.org/developers/server/http-api#key-format)), don't expose private keys or make them public as anyone with the key can use the corresponding wallet.
+To generate a new wallet address and private key ([JWK](https://docs.arweave.org/developers/server/http-api#key-format)) use the function `arweave.wallets.generate()`. Once AR has been sent to the address for a new wallet, the key can then be used to sign outgoing transactions.
 
-Make sure they're stored securely as they can never be recovered if lost.
+> Don't expose private keys or make them public as anyone with the key can use the corresponding wallet.
 
-Once AR has been sent to the address for a new wallet, the key can then be used to sign outgoing transactions.
+> Make sure your keys stored securely as they can never be recovered if lost.
+
+
 ```js
 arweave.wallets.generate().then((key) => {
     console.log(key);
@@ -137,7 +141,7 @@ arweave.wallets.generate().then((key) => {
 });
 ```
 
-#### Get the wallet address for a private key
+#### Getting the wallet address for a private key
 
 ```js
 arweave.wallets.jwkToAddress(key).then((address) => {
@@ -146,8 +150,10 @@ arweave.wallets.jwkToAddress(key).then((address) => {
 });
 ```
 
-#### Get an address balance
-Get the balance of a wallet address, all amounts by default are returned in [winston](https://docs.arweave.org/developers/server/http-api#ar-and-winston).
+#### Getting an address balance
+
+> All amounts are returned in [winston](https://docs.arweave.org/developers/server/http-api#ar-and-winston).
+
 ```js
 arweave.wallets.getBalance('1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY').then((balance) => {
     let winston = balance;
@@ -161,7 +167,7 @@ arweave.wallets.getBalance('1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY').then((
 });
 ```
 
-#### Get the last transaction ID from a wallet
+#### Getting the last transaction Id from a wallet
 
 ```js
 arweave.wallets.getLastTransactionID('1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY').then((transactionId) => {
@@ -172,21 +178,21 @@ arweave.wallets.getLastTransactionID('1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKl
 
 ### Transactions
 
-Transactions are the building blocks of the Arweave permaweb. They can send [AR](https://docs.arweave.org/developers/server/http-api#ar-and-winston) between wallet addresses or store data on the Arweave network.
+Transactions are the building blocks of Arweave. They can send [AR](https://docs.arweave.org/developers/server/http-api#ar-and-winston) between wallet addresses or store data on Arweave.
 
-The create transaction methods create and return an unsigned transaction object. You must sign the transaction and submit it separately using the `transactions.sign` and `transactions.submit` methods.
+The create transaction methods create and return an unsigned transaction object. You must sign the transaction and submit it separately using the `transactions.sign()` and `transactions.submit()` methods.
 
-If you don't pass in a `key` argument when creating a transaction, Arweave.js will attempt to use a browser-based wallet extension, such as [ArConnect](https://arconnect.io) or [Arweave.app](https://arweave.app), to sign the transaction.
+If you don't pass a `key` argument when creating a transaction, Arweave.js will attempt to use a browser-based wallet extension, such as [ArConnect](https://arconnect.io) or [Arweave.app](https://arweave.app) to sign the transaction.
 
 **Modifying a transaction object after signing it will invalidate the signature,** causing it to be rejected by the network if submitted in that state. Transaction prices are based on the size of the data field, so modifying the data field after a transaction has been created isn't recommended as you'll need to manually update the price.
 
-The transaction ID is a hash of the transaction signature, so a transaction ID can't be known until its contents are finalised and it has been signed.
+The transaction Id is a hash of the transaction signature, so a transaction Id can't be known until its contents are finalized and it has been signed.
 
-#### Create a data transaction
+#### Creating a data transaction
 
-**Note:** If you are planning to upload large batches of data transactions to the Arweave network, it is strongly advised that you use [ArBundles](https://github.com/Bundler-Network/arbundles) instead of transactions with Arweave.js. You can read about bundles and their advantages on the [Arwiki](https://arwiki.wiki/#/en/preview/WUAtjfiDQEIqhsUcHXIFTn5ZmeDIE7If9hJREBLRgak).
+> **Note:** If you are planning to upload large batches of data transactions to Arweave, it is strongly advised that you use [ArBundles](https://github.com/Bundler-Network/arbundles) instead of transactions with Arweave.js. You can read about bundles and their advantages on the [Arwiki](https://arwiki.wiki/#/en/preview/WUAtjfiDQEIqhsUcHXIFTn5ZmeDIE7If9hJREBLRgak).
 
-Data transactions are used to store data on the Arweave permaweb. They can contain HTML or any arbitrary data and are served like webpages.
+Data transactions are used to store data on Arweave. They can contain HTML or any arbitrary data and are served like webpages.
 
 ```js
 let key = await arweave.wallets.generate();
@@ -220,9 +226,9 @@ console.log(transactionA);
 // }
 ```
 
-#### Create a wallet to wallet transaction
+#### Creating a wallet to wallet transaction
 
-Wallet to wallet transactions can facilitate payments from one wallet to another, given a target wallet and AR token quantity in Winston.
+Wallet to wallet transactions facilitate payments from one wallet to another. Supply a target wallet, and AR quantity in Winston.
 
 ```js
 let key = await arweave.wallets.generate();
@@ -251,14 +257,15 @@ console.log(transaction);
 // }
 ```
 
-#### Add tags to a transaction
+#### Adding tags to a transaction
 
 Metadata can be added to transactions through tags, these are simple key/value attributes that can be used to document the contents of a transaction or provide related data.
 
 [GraphQL](#graphql) uses tags when searching for transactions.
 
-The `Content-Type` is a reserved tag and is used to set the data content type. For example, a transaction with HTML data and a content type tag of `text/html` will be served as a HTML page and render correctly in browsers,
-if the content type is set to `text/plain` then it will be served as a plain text document and not render in browsers.
+The `Content-Type` tag is a reserved tag and is used to set the data content type. For example, a transaction with HTML data and a content type tag of `text/html` will be served as a HTML page and render correctly in browsers, if the content type is set to `text/plain` then it will be served as a plain text document and not render in browsers.
+
+> If you omit the `Content-Type` tag, browsers will be unable to render the content. 
 
 ```js
 let key = await arweave.wallets.generate();
@@ -291,7 +298,7 @@ console.log(transaction);
 // }
 ```
 
-#### Sign a transaction
+#### Signing a transaction
 
 ```js
 let key = await arweave.wallets.generate();
@@ -321,11 +328,9 @@ console.log(transaction);
 // }
 ```
 
-#### Submit a transaction
+#### Submitting a transaction
 
-The preferred method of submitting a data transaction is to use chunk uploading. This method will allow larger transaction sizes, resuming a transaction upload if it's interrupted and give progress updates while uploading.
-
-Simple example:
+The preferred method of submitting a data transaction is to use chunk uploading. This method allows larger transaction sizes, resuming an upload if it's interrupted, and give progress updates while uploading.
 
 ```js
 
@@ -343,7 +348,8 @@ while (!uploader.isComplete) {
   console.log(`${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`);
 }
 ```
-_**N.B.** The above code has been simplified and ignores potential errors._
+
+> The above code has been simplified and ignores potential errors.
 
 You can also submit transactions using `transactions.post()` which is suitable for small transactions or token transfers:
 
@@ -365,17 +371,15 @@ console.log(response.status);
 // HTTP response codes (200 - server received the transaction, 4XX - invalid transaction, 5XX - error)
 ```
 
-**N.B.** 
-_This `200` response does not mean that the transaction has mined & confirmed, and that a txid can be used as if it's immutable._ _It just means that a node has received your transaction._ _See [Get a transaction status](#get-a-transaction-status) for more detail on how to correctly determine that your transaction has been mined & confirmed._ _This also applies to the `uploader` method._
+The `200` responses means a node has received your transaction, it does not mean that the transaction has mined & confirmed, and that a txid can be used as if it's immutable. See [Get a transaction status](#get-a-transaction-status) for more detail on how to correctly determine that your transaction has been mined & confirmed. This also applies to the `uploader()` method.
 
 
 ##### Chunked uploading advanced options
 
-You can resume an upload from a saved uploader object, that you have persisted in storage some using 
+You can resume an upload from a saved uploader object that you have persisted in storage some using 
 `JSON.stringify(uploader)` at any stage of the upload. To resume, parse it back into an object and pass it to `getUploader()` along with the transactions data:
 
 ```js
-
 let data = fs.readFileSync('path/to/file.pdf'); // get the same data
 let resumeObject = JSON.parse(savedUploader); // get uploader object from where you stored it.
 
@@ -383,7 +387,6 @@ let uploader = await arweave.transactions.getUploader(resumeObject, data);
 while (!uploader.isComplete) {
   await uploader.uploadChunk();
 }
-
 ```
 
 When resuming the upload, you *must provide the same data* as the original upload. When you serialize the uploader object with `JSON.stringify()` to save it somewhere, it will not include the data.
@@ -391,9 +394,8 @@ When resuming the upload, you *must provide the same data* as the original uploa
 You can also resume an upload from just the transaction ID and data, once it has been mined into a block. This can be useful if you didn't save the uploader somewhere but the upload got interrupted. This will re-upload all of the data from the beginning, since we don't know which parts have been uploaded:
 
 ```js
-
-let data = fs.readFileSync('path/to/file.pdf'); // get the same data
-let resumeTxId = 'mytxid' // a transaction id for a mined transaction that didn't complete the upload.
+let data = fs.readFileSync('path/to/file.pdf'); // Get the same data
+let resumeTxId = 'mytxid' // A transaction id for a mined transaction that didn't complete the upload.
 
 let uploader = await arweave.transactions.getUploader(resumeTxId, data);
 while (!uploader.isComplete) {
@@ -402,28 +404,27 @@ while (!uploader.isComplete) {
 }
 ```
 
-
-alternatively
+Alternatively:
 
 ```js
-// example of tx being accepted and mined, but the network is missing the data
+// Example of tx being accepted and mined, but the network is missing the data
 const Arweave = require("./node/index.js"); // assumed locally built nodejs target
 const ArweaveTransaction = require("./node/lib/transaction.js");
 const fs = require("fs");
 
-// initialize a gateway connection
+// Initialize a gateway connection
 const arweave = Arweave.init({
   host: "arweave.net",
   port: 443,
   protocol: "https",
 });
 
-// the data that you paid for but is missing in the network
+// The data that you paid for but is missing in the network
 let missingData = fs.readFileSync(
   "./myfile.mov"
 );
 
-// get the tx headers from arweave.net/tx/{txid}
+// Get the tx headers from arweave.net/tx/{txid}
 let txHeaders = require("./txheaders.json");
 
 (async () => {
@@ -444,7 +445,7 @@ for await (const uploader of arweave.transactions.upload(tx)) {
 // done.
 ```
 
-### Stream uploads
+### Streaming uploads
 
 @irys/arweave includes a modified version of [arweave-stream-tx](https://github.com/Bundlr-Network/arweave-stream-tx) to allow for the 
 efficient uploading of transactions of arbitrary size
@@ -463,9 +464,9 @@ await pipeline(createReadStream("./<path-to-file>"), uploadTransactionAsync(tx, 
 ```
 
 
-#### Get a transaction status
+#### Getting transaction status
 
-Remember: Just like other blockchain-style systems (like Bitcoin and Ethereum), you should always ensure that your transaction has received a number of confirmations in blocks before you assume that the transaction has been fully accepted by the network.
+> Just like other blockchain-style systems (like Bitcoin and Ethereum), you should always ensure that your transaction has received a number of confirmations in blocks before you assume that the transaction has been fully accepted by the network.
 
 ```js
 arweave.transactions.getStatus('bNbA3TEQVL60xlgCcqdz4ZPHFZ711cZ3hmkpGttDt_U').then(res => {
@@ -480,10 +481,11 @@ arweave.transactions.getStatus('bNbA3TEQVL60xlgCcqdz4ZPHFZ711cZ3hmkpGttDt_U').th
     //}
 })
 ```
-_**N.B.** We strongly advise that you check the status and number of confirmations for a given txid before integrating it elsewhere (for example, if you plan to integrate a txid into an NFT contract), even if you have received a ‘200’ status response._
+
+> We strongly advise that you check the status and number of confirmations for a given txid before integrating it elsewhere (for example, if you plan to integrate a txid into an NFT contract), even if you have received a ‘200’ status response.
 
 
-#### Get a transaction
+#### Getting a transaction
 
 Fetch a transaction from the connected arweave node. The data and tags are base64 encoded, these can be decoded using the built in helper methods.
 
@@ -516,7 +518,7 @@ const transaction = arweave.transactions.get('hKMMPNh_emBf8v_at1tFzNYACisyMQNcKz
 });
 ```
 
-#### Get transaction data
+#### Getting transaction data
 
 You can get the transaction data from a transaction ID without having to get the entire transaction
 
@@ -541,7 +543,9 @@ arweave.transactions.getData('bNbA3TEQVL60xlgCcqdz4ZPHFZ711cZ3hmkpGttDt_U', {dec
 ```
 
 #### Getting tags from transactions
+
 Unlike arweave-js, tags are automatically decoded:
+
 ```js
   const transaction = arweave.transactions.get("bNbA3TEQVL60xlgCcqdz4ZPHFZ711cZ3hmkpGttDt_U").then((transaction) => {
     transaction["tags"].forEach(({ name, value }) => {
@@ -553,13 +557,14 @@ Unlike arweave-js, tags are automatically decoded:
 ```
 
 ### Blocks
+
 Blocks are base elements of Arweave's blockweave data structure.
 Each block is linked to two prior blocks: the previous block in the "chain" (as with traditional blockchain
 protocols), and a block from the previous history of the blockchain (the "recall block"). Each block contains
 a list of zero to many transactions.
 
 
-#### Get a block by indep_hash
+#### Getting a block by indep_hash
 Gets block data for given independent hash 
 
 ```js
@@ -577,7 +582,7 @@ console.log(result)
 //   "txs": [ ...
 ```
 
-#### Get block by height
+#### Getting block by height
 
 ```js
 const result = await arweave.blocks.getByHeight(711150); 
@@ -595,7 +600,7 @@ console.log(result)
 ```
 
 
-#### Get current block
+#### Getting current block
 Gets a block data for current block, i.e., block with indep_hash:
 ```js
 const {current} = await arweave.network.getInfo();
@@ -610,10 +615,10 @@ console.log(result)
 ```
 
 ### GraphQL 
-Find your transation ids and tags by searching their metadata. GraphQL (GQL) provides flexible querying and allows you to search for transactions by tags, wallet address, block height, etc. 
+
+GraphQL (GQL) provides flexible querying and allows you to search for transactions by tags, wallet address, block height, etc. 
 
 Please see the [GQL Guide](https://gql-guide.vercel.app/) for further details.
-
 
 
 ### License
