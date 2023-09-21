@@ -13,7 +13,6 @@ import type * as _ from "arconnect";
 import type FallbackApi from "./lib/fallbackApi";
 import type Merkle from "./lib/merkle";
 import type { DeepHash } from "./lib/deepHash";
-import { Readable } from "stream";
 declare const arweaveWallet: Window["arweaveWallet"];
 
 export type TransactionConfirmedData = {
@@ -161,11 +160,15 @@ export default class Transactions {
     return data;
   }
 
-  public async getDataStream(id: string): Promise<Readable> {
-    let data: Readable | undefined = undefined;
+  public async getDataStream(id: string): Promise<AsyncIterable<Uint8Array>> {
+    let data: AsyncIterable<Uint8Array> | undefined = undefined;
 
     try {
-      data = (await this.api.get(`/${id}`, { responseType: "stream" })).data;
+      const resData = (await this.api.get(`/${id}`, { responseType: "arraybuffer" })).data;
+      const gen = async function* g(): AsyncGenerator<Uint8Array> {
+        yield resData;
+      };
+      data = gen();
     } catch (error) {
       console.error(`Error while trying to download contiguous data from gateway cache for ${id}`);
       console.error(error);
@@ -175,7 +178,7 @@ export default class Transactions {
       console.warn(`Falling back to chunks for ${id}`);
       try {
         const gen = this.chunks.concurrentChunkDownloader(id);
-        data = Readable.from(gen);
+        data = gen;
       } catch (error) {
         console.error(`Error while trying to download chunked data for ${id}`);
         console.error(error);
