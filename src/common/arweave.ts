@@ -8,7 +8,7 @@ import type CryptoInterface from "./lib/crypto/crypto-interface";
 import { DeepHash } from "./lib/deepHash";
 import FallbackApi from "./lib/fallbackApi";
 import Merkle from "./lib/merkle";
-import { Stream } from "./lib/stream";
+
 import type { Tag, TransactionInterface } from "./lib/transaction";
 import Transaction from "./lib/transaction";
 import * as ArweaveUtils from "./lib/utils";
@@ -53,7 +53,6 @@ export abstract class Arweave {
   public static init: (apiConfig: ApiConfig) => Arweave;
 
   public static utils = ArweaveUtils;
-  public stream: Stream;
 
   public crypto: AugmentedCrypto;
 
@@ -77,9 +76,6 @@ export abstract class Arweave {
 
     this.transactions = new Transactions({
       deps: { api: this.api, crypto: config.crypto, chunks: this.chunks, merkle: this.merkle, deepHash: this.deepHash },
-    });
-    this.stream = new Stream({
-      deps: { crypto: this.crypto, api: this.api, merkle: this.merkle, transactions: this.transactions, deepHash: this.deepHash },
     });
   }
 
