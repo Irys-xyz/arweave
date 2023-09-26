@@ -8,6 +8,7 @@ export interface ApiConfig {
   timeout?: number;
   logging?: boolean;
   logger?: (msg: string) => void;
+  network?: string;
   headers?: Record<string, string>;
   withCredentials?: boolean;
   retry?: AsyncRetry.Options;
@@ -49,6 +50,8 @@ export default class Api {
   }
 
   private mergeDefaults(config: ApiConfig): ApiConfig {
+    config.headers ??= {};
+    if (config.network && !Object.keys(config.headers).includes("x-network")) config.headers["x-network"] = config.network;
     return {
       url: config.url,
       timeout: config.timeout ?? 20000,
