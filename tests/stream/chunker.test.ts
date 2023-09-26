@@ -1,7 +1,7 @@
 import { randomBytes } from "crypto";
 import { Readable } from "stream";
 import { pipeline } from "stream/promises";
-import { ChunkBuffer, chunker } from "../../src/common/lib/stream/chunker";
+import { ChunkBuffer, chunker } from "../../src/node/stream/chunker";
 
 describe("ChunkBuffer", () => {
   test("should be able to chunk a single buffer", () => {

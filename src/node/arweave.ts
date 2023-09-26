@@ -23,5 +23,5 @@ export class Arweave extends CommonArweave {
     return new Arweave(apiConfig);
   }
 }
-
+export const NodeArweave = Arweave;
 export default Arweave;
