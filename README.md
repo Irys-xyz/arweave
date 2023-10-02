@@ -1,10 +1,9 @@
 # Arweave JS 
 
-@irys/arweave is a JavaScript/TypeScript SDK for interacting with [Arweave](https://www.arweave.org/) and uploading data to the permaweb. It works in latest browsers and Node JS.
+@irys/arweave is a TypeScript/JavaScript SDK for interacting with [Arweave](https://www.arweave.org/) and uploading data to the permaweb. It works in latest browsers and Node JS.
 
 > **Notes:** 
-> 1. If you are planning to upload large batches of data transactions to Arweave, it is strongly advised that you use [ArBundles](https://github.com/Bundler-Network/arbundles) instead of transactions with Arweave.js. You can read about bundles and their advantages on the [Arwiki](https://arwiki.wiki/#/en/bundles).
-<!-- > 2. When working with NodeJS a minimum version of 18+ is required, with some exceptions. See these [release notes](https://github.com/ArweaveTeam/arweave-js/releases/tag/v1.12.4) for more details. -->
+> 1. If you are planning to upload large batches of data transactions to Arweave, it is strongly advised that you use [ArBundles](https://github.com/Bundler-Network/arbundles) or [Irys](https://irys.xyz) instead of transactions with Arweave.js. You can read about bundles and their advantages on the [Arwiki](https://arwiki.wiki/#/en/bundles).
 
 - [Arweave JS](#arweave-js)
 	- [Installation](#installation)
@@ -74,15 +73,15 @@ Single bundle file (web only - use the NPM method if using Node).
 const Arweave = require('@irys/arweave');
 
 // If you want to connect directly to a node
-const arweave = new Arweave({url: "http://127.0.0.1:1984"})
+const arweave = new Arweave({ url: "http://127.0.0.1:1984" })
 
 // Or to specify a gateway when running from NodeJS you might use
-const arweave =  new Arweave({url: "https://arweave.net"})
+const arweave =  new Arweave({ url: "https://arweave.net" })
 
 // @irys/arweave includes a fallback capable request backend - requests can be specified to be gateway only or to try gateways and miners. requests are forwarded to hosts in the order you specify below, with gateways being used before miners if both can be used for a request.
 
 // Specify multiple gateways and multiple miners - will request arweave.net, arweave.dev, your-gateway, and the miners
-const arweave = new Arweave(["https://arweave.net", "https://arweave.dev", "https://your-gateway"], {miners: ["http://127.0.0.1:1984", "http://52.38.214.72:1984"]})
+const arweave = new Arweave(["https://arweave.net", "https://arweave.dev", "https://your-gateway"], { miners: ["http://127.0.0.1:1984", "http://52.38.214.72:1984"] })
 ```
 
 
@@ -95,7 +94,7 @@ const arweave = new Arweave(["https://arweave.net", "https://arweave.dev", "http
     <title>Hello world</title>
     <script src="https://unpkg.com/@irys/arweave/build/web.bundle.js"></script>
     <script>
-    const arweave = new Arweave({url: "https://arweave.net"})
+    const arweave = new Arweave({ url: "https://arweave.net" })
     arweave.network.getInfo().then(console.log);
     </script>
 </head>
@@ -447,8 +446,8 @@ for await (const uploader of arweave.transactions.upload(tx)) {
 
 ### Streaming uploads
 
-@irys/arweave includes a modified version of [arweave-stream-tx](https://github.com/Bundlr-Network/arweave-stream-tx) to allow for the 
-efficient uploading of transactions of arbitrary size
+@irys/arweave includes (for NodeJS) a modified version of [arweave-stream-tx](https://github.com/Bundlr-Network/arweave-stream-tx) to allow for the 
+efficient uploading of transactions of arbitrary size.
 
 ```ts
 import {pipeline} from "stream/promises";
@@ -489,7 +488,6 @@ arweave.transactions.getStatus('bNbA3TEQVL60xlgCcqdz4ZPHFZ711cZ3hmkpGttDt_U').th
 
 Fetch a transaction from the connected arweave node. The data and tags are base64 encoded, these can be decoded using the built in helper methods.
 
-> **Update since v1.9.0**
 *Due to how the API has evolved over time and with larger transaction support, the `data` field is no longer _guaranteed_ to be returned from the network as part of the transaction json, therefore, it is not recommended that you use this function for fetching data anymore. You should update your applications to use [`arweave.transactions.getData()`](#get-transaction-data) instead, this will handle small transactions, as well as the reassembling of chunks for larger ones, it can also benefit from gateway optimisations.*
 
 ```js
