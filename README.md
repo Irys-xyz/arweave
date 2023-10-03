@@ -1,6 +1,6 @@
 # Arweave JS 
 
-![](https://github.com/Bundlr-Network/arweave/blob/master/assets/irys-arweave-package.png?raw=true)
+![](./assets/irys-arweave-package.png?raw=true)
 
 @irys/arweave is a TypeScript/JavaScript SDK for interacting with [Arweave](https://www.arweave.org/) and uploading data to the permaweb. It works in latest browsers and Node JS.
 
@@ -387,8 +387,8 @@ You can resume an upload from a saved uploader object that you have persisted in
 `JSON.stringify(uploader)` at any stage of the upload. To resume, parse it back into an object and pass it to `getUploader()` along with the transactions data:
 
 ```js
-let data = fs.readFileSync('path/to/file.pdf'); // get the same data
-let resumeObject = JSON.parse(savedUploader); // get uploader object from where you stored it.
+let data = fs.readFileSync('path/to/file.pdf'); // Get the same data
+let resumeObject = JSON.parse(savedUploader); // Get uploader object from where you stored it.
 
 let uploader = await arweave.transactions.getUploader(resumeObject, data);
 while (!uploader.isComplete) {
@@ -415,7 +415,7 @@ Alternatively:
 
 ```js
 // Example of tx being accepted and mined, but the network is missing the data
-const Arweave = require("./node/index.js"); // assumed locally built nodejs target
+const Arweave = require("./node/index.js"); // Assumed locally built nodejs target
 const ArweaveTransaction = require("./node/lib/transaction.js");
 const fs = require("fs");
 
