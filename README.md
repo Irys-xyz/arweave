@@ -7,7 +7,7 @@
 The package is a fork of [arweave-js](https://github.com/ArweaveTeam/arweave-js) that introduces better typing, increased web compatibility, and better support for using streams by integrating code from [arweave-stream-tx](https://github.com/CDDelta/arweave-stream-tx). 
 
 > **Note:** 
-> If you are planning to upload large batches of data transactions to Arweave, it is strongly advised that you use [ArBundles](https://github.com/Bundler-Network/arbundles) or [Irys](https://irys.xyz) instead of transactions with Arweave.js. You can read about bundles and their advantages on the [Arwiki](https://arwiki.wiki/#/en/bundles).
+> If you are planning to upload large batches of data transactions to Arweave, it is strongly advised that you use [ArBundles](https://github.com/Bundler-Network/arbundles) or [Irys](https://irys.xyz) instead of transactions with `@irys/arweave`. You can read about bundles and their advantages on the [Arwiki](https://arwiki.wiki/#/en/bundles).
 
 - [Arweave JS](#arweave-js)
 	- [Installation](#installation)
@@ -197,7 +197,7 @@ The transaction ID is a hash of the transaction signature, so a transaction ID c
 
 #### Creating a data transaction
 
-> **Note:** If you are planning to upload large batches of data transactions to Arweave, it is strongly advised that you use [ArBundles](https://github.com/Bundler-Network/arbundles) instead of transactions with Arweave.js. You can read about bundles and their advantages on the [Arwiki](https://arwiki.wiki/#/en/preview/WUAtjfiDQEIqhsUcHXIFTn5ZmeDIE7If9hJREBLRgak).
+> **Note:** If you are planning to upload large batches of data transactions to Arweave, it is strongly advised that you use [ArBundles](https://github.com/Bundler-Network/arbundles) instead of transactions with `@irys/arweave`. You can read about bundles and their advantages on the [Arwiki](https://arwiki.wiki/#/en/preview/WUAtjfiDQEIqhsUcHXIFTn5ZmeDIE7If9hJREBLRgak).
 
 Data transactions are used to store data on Arweave. They can contain HTML or any arbitrary data and are served like webpages.
 
