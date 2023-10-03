@@ -1,10 +1,10 @@
-# Arweave JS 
+# @irys/arweave
 
 ![](./assets/irys-arweave-package.png?raw=true)
 
 @irys/arweave is a TypeScript/JavaScript SDK for interacting with [Arweave](https://www.arweave.org/) and uploading data to the permaweb. It works in latest browsers and Node JS.
 
-The package is a fork of [arweave-js](https://github.com/ArweaveTeam/arweave-js) that introduces better typing, increased web compatibility, and better support for using streams by integrating code from [arweave-stream-tx](https://github.com/CDDelta/arweave-stream-tx). 
+The package is a fork of [arweave-js](https://github.com/ArweaveTeam/arweave-js) that introduces better typing, Improved  NodeJS compatibility, and better support for using streams by integrating code from [arweave-stream-tx](https://github.com/CDDelta/arweave-stream-tx). 
 
 > **Note:** 
 > If you are planning to upload large batches of data transactions to Arweave, it is strongly advised that you use [ArBundles](https://github.com/Bundler-Network/arbundles) or [Irys](https://irys.xyz) instead of transactions with `@irys/arweave`. You can read about bundles and their advantages on the [Arwiki](https://arwiki.wiki/#/en/bundles).
@@ -86,7 +86,7 @@ const arweave =  new Arweave({ url: "https://arweave.net" })
 
 // @irys/arweave includes a fallback capable request backend - requests can be specified to be gateway only or to try gateways and miners. Requests are forwarded to hosts in the order you specify, with gateways being used before miners if both can be used for a request.
 
-// Specify multiple gateways and multiple miners - will request arweave.net, arweave.dev, your-gateway, and the miners
+// Specify multiple gateways and multiple miners - will request from arweave.net, arweave.dev, your-gateway, and the miners
 const arweave = new Arweave(["https://arweave.net", "https://arweave.dev", "https://your-gateway"], { miners: ["http://127.0.0.1:1984", "http://52.38.214.72:1984"] })
 ```
 
@@ -189,7 +189,7 @@ Transactions are the building blocks of Arweave. They can send [AR](https://docs
 
 The create transaction methods create and return an unsigned transaction object. You must sign the transaction and submit it separately using the `transactions.sign()` and `transactions.submit()` methods.
 
-If you don't pass a `key` argument when creating a transaction, Arweave.js will attempt to use a browser-based wallet extension, such as [ArConnect](https://arconnect.io) or [Arweave.app](https://arweave.app) to sign the transaction.
+If you don't pass a `key` argument when creating a transaction, @irys/arweave will attempt to use a browser-based wallet extension, such as [ArConnect](https://arconnect.io) or [Arweave.app](https://arweave.app) to sign the transaction.
 
 **Modifying a transaction object after signing it will invalidate the signature,** causing it to be rejected by the network if submitted in that state. Transaction prices are based on the size of the data field, so modifying the data field after a transaction has been created isn't recommended as you'll need to manually update the price.
 
