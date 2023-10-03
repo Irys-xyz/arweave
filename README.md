@@ -76,18 +76,21 @@ Include the package via import statement when possible. If a script tag is requi
 ## Initialization
 
 ```js
-const Arweave = require('@irys/arweave');
+import Arweave from "@irys/arweave";
 
 // If you want to connect directly to a node
-const arweave = new Arweave({ url: "http://127.0.0.1:1984" })
+const arweave = new Arweave({ url: "http://127.0.0.1:1984" });
 
 // Or to specify a gateway when running from NodeJS you might use
-const arweave =  new Arweave({ url: "https://arweave.net" })
+const arweave = new Arweave({ url: "https://arweave.net" });
 
 // @irys/arweave includes a fallback capable request backend - requests can be specified to be gateway only or to try gateways and miners. Requests are forwarded to hosts in the order you specify, with gateways being used before miners if both can be used for a request.
 
 // Specify multiple gateways and multiple miners - will request from arweave.net, arweave.dev, your-gateway, and the miners
-const arweave = new Arweave(["https://arweave.net", "https://arweave.dev", "https://your-gateway"], { miners: ["http://127.0.0.1:1984", "http://52.38.214.72:1984"] })
+const arweave = new Arweave(["https://arweave.net", "https://arweave.dev", "https://your-gateway"], {
+  miners: ["http://127.0.0.1:1984", "http://52.38.214.72:1984"],
+});
+
 ```
 
 
@@ -140,20 +143,21 @@ To generate a new wallet address and private key ([JWK](https://docs.arweave.org
 
 ```js
 arweave.wallets.generate().then((key) => {
-    console.log(key);
-    // {
-    //     "kty": "RSA",
-    //     "n": "3WquzP5IVTIsv3XYJjfw5L-t4X34WoWHwOuxb9V8w...",
-    //     "e": ...
+  console.log(key);
+  // {
+  //     "kty": "RSA",
+  //     "n": "3WquzP5IVTIsv3XYJjfw5L-t4X34WoWHwOuxb9V8w...",
+  //     "e": ...
 });
+
 ```
 
 #### Getting the wallet address for a private key
 
 ```js
 arweave.wallets.jwkToAddress(key).then((address) => {
-    console.log(address);
-    //1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY
+  console.log(address);
+  //1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY
 });
 ```
 
@@ -162,25 +166,27 @@ arweave.wallets.jwkToAddress(key).then((address) => {
 > All amounts are returned in [Winston](https://docs.arweave.org/developers/server/http-api#ar-and-winston).
 
 ```js
-arweave.wallets.getBalance('1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY').then((balance) => {
-    let winston = balance;
-    let ar = arweave.utils.winstonToAr(balance);
+arweave.wallets.getBalance("1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY").then((balance) => {
+  let winston = balance;
+  let ar = arweave.utils.winstonToAr(balance);
 
-    console.log(winston);
-    //125213858712
+  console.log(winston);
+  //125213858712
 
-    console.log(ar);
-    //0.125213858712
+  console.log(ar);
+  //0.125213858712
 });
+
 ```
 
 #### Getting the last transaction ID from a wallet
 
 ```js
-arweave.wallets.getLastTransactionID('1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY').then((transactionId) => {
-    console.log(transactionId);
-    //3pXpj43Tk8QzDAoERjHE3ED7oEKLKephjnVakvkiHF8
+arweave.wallets.getLastTransactionID("1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY").then((transactionId) => {
+  console.log(transactionId);
+  //3pXpj43Tk8QzDAoERjHE3ED7oEKLKephjnVakvkiHF8
 });
+
 ```
 
 ### Transactions
@@ -205,15 +211,20 @@ Data transactions are used to store data on Arweave. They can contain HTML or an
 let key = await arweave.wallets.generate();
 
 // Plain text
-let transactionA = await arweave.createTransaction({
-    data: '<html><head><meta charset="UTF-8"><title>Hello world!</title></head><body></body></html>'
-}, key);
+let transactionA = await arweave.createTransaction(
+  {
+    data: '<html><head><meta charset="UTF-8"><title>Hello world!</title></head><body></body></html>',
+  },
+  key,
+);
 
 // Buffer
-let transactionB = await arweave.createTransaction({
-    data: Buffer.from('Some data', 'utf8')
-}, key);
-
+let transactionB = await arweave.createTransaction(
+  {
+    data: Buffer.from("Some data", "utf8"),
+  },
+  key,
+);
 
 console.log(transactionA);
 // Transaction {
@@ -231,6 +242,7 @@ console.log(transactionA);
 //   reward: '7489274',
 //   signature: 'JYdFPblDuT95ky7_wVss3Ax9e4Qygcd_lEcB07sDPUD_wNslOk...'
 // }
+
 ```
 
 #### Creating a wallet to wallet transaction
@@ -241,10 +253,13 @@ Wallet to wallet transactions facilitate payments from one wallet to another. Su
 let key = await arweave.wallets.generate();
 
 // Send 10.5 AR to 1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY
-let transaction = await arweave.createTransaction({
-    target: '1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY',
-    quantity: arweave.utils.arToWinston('10.5')
-}, key);
+let transaction = await arweave.createTransaction(
+  {
+    target: "1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY",
+    quantity: arweave.utils.arToWinston("10.5"),
+  },
+  key,
+);
 
 console.log(transaction);
 // Transaction {
@@ -262,6 +277,7 @@ console.log(transaction);
 //   reward: '7468335',
 //   signature: 'DnUOYbRSkhI4ZXg5fpYDCwPv8yvM5toAneSx4Jlg0zjIocqPs8giPP...'
 // }
+
 ```
 
 #### Adding tags to a transaction
@@ -277,12 +293,15 @@ Metadata can be added to transactions through tags, these are simple key/value p
 ```js
 let key = await arweave.wallets.generate();
 
-let transaction = await arweave.createTransaction({
+let transaction = await arweave.createTransaction(
+  {
     data: '<html><head><meta charset="UTF-8"><title>Hello world!</title></head><body></body></html>',
-}, key);
+  },
+  key,
+);
 
-transaction.addTag('Content-Type', 'text/html');
-transaction.addTag('key2', 'value2');
+transaction.addTag("Content-Type", "text/html");
+transaction.addTag("key2", "value2");
 
 console.log(transaction);
 // Transaction {
@@ -303,6 +322,7 @@ console.log(transaction);
 //   reward: '7673074',
 //   signature: ''
 // }
+
 ```
 
 #### Signing a transaction
@@ -310,10 +330,13 @@ console.log(transaction);
 ```js
 let key = await arweave.wallets.generate();
 
-let transaction = await arweave.createTransaction({
-    target: '1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY',
-    quantity: arweave.utils.arToWinston('10.5')
-}, key);
+let transaction = await arweave.createTransaction(
+  {
+    target: "1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY",
+    quantity: arweave.utils.arToWinston("10.5"),
+  },
+  key,
+);
 
 await arweave.transactions.sign(transaction, key);
 
@@ -333,6 +356,7 @@ console.log(transaction);
 //   reward: '7468335',
 //   signature: 'DnUOYbRSkhI4ZXg5fpYDCwPv8yvM5toAneSx4Jlg0zjIocqPs8giPP...'
 // }
+
 ```
 
 #### Submitting a transaction
@@ -343,10 +367,10 @@ The preferred method of submitting a data transaction is to use chunk uploading.
 
 ```js
 
-let data = fs.readFileSync('path/to/file.pdf');
+let data = fs.readFileSync("path/to/file.pdf");
 
 let transaction = await arweave.createTransaction({ data: data }, key);
-transaction.addTag('Content-Type', 'application/pdf');
+transaction.addTag("Content-Type", "application/pdf");
 
 await arweave.transactions.sign(transaction, key);
 
@@ -363,10 +387,13 @@ You can also submit transactions using `transactions.post()` which is suitable f
 ```js
 let key = await arweave.wallets.generate();
 
-let transaction = await arweave.createTransaction({
-    target: '1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY',
-    quantity: arweave.ar.arToWinston('10.5')
-}, key);
+let transaction = await arweave.createTransaction(
+  {
+    target: "1seRanklLU_1VTGkEk7P0xAwMJfA7owA1JHW5KyZKlY",
+    quantity: arweave.ar.arToWinston("10.5"),
+  },
+  key,
+);
 
 await arweave.transactions.sign(transaction, key);
 
@@ -374,6 +401,7 @@ const response = await arweave.transactions.post(transaction);
 
 console.log(response.status);
 // 200 : not to be confused with getStatus === 200, see note below**
+
 
 // HTTP response codes (200 - server received the transaction, 4XX - invalid transaction, 5XX - error)
 ```
@@ -387,7 +415,7 @@ You can resume an upload from a saved uploader object that you have persisted in
 `JSON.stringify(uploader)` at any stage of the upload. To resume, parse it back into an object and pass it to `getUploader()` along with the transactions data:
 
 ```js
-let data = fs.readFileSync('path/to/file.pdf'); // Get the same data
+let data = fs.readFileSync("path/to/file.pdf"); // Get the same data
 let resumeObject = JSON.parse(savedUploader); // Get uploader object from where you stored it.
 
 let uploader = await arweave.transactions.getUploader(resumeObject, data);
@@ -401,8 +429,8 @@ When resuming the upload, you *must provide the same data* as the original uploa
 You can also resume an upload from just the transaction ID and data, once it has been mined into a block. This can be useful if you didn't save the uploader somewhere but the upload got interrupted. This will re-upload all of the data from the beginning, since we don't know which parts have been uploaded:
 
 ```js
-let data = fs.readFileSync('path/to/file.pdf'); // Get the same data
-let resumeTxId = 'mytxid' // A transaction ID for a mined transaction that didn't complete the upload.
+let data = fs.readFileSync("path/to/file.pdf"); // Get the same data
+let resumeTxId = "mytxid"; // A transaction ID for a mined transaction that didn't complete the upload.
 
 let uploader = await arweave.transactions.getUploader(resumeTxId, data);
 while (!uploader.isComplete) {
@@ -415,9 +443,9 @@ Alternatively:
 
 ```js
 // Example of tx being accepted and mined, but the network is missing the data
-const Arweave = require("./node/index.js"); // Assumed locally built nodejs target
-const ArweaveTransaction = require("./node/lib/transaction.js");
-const fs = require("fs");
+import Arweave from "./node/index.js"; // Assumed locally built nodejs target
+import ArweaveTransaction from "./node/lib/transaction.js";
+import fs from "fs";
 
 // Initialize a gateway connection
 const arweave = Arweave.init({
@@ -427,9 +455,7 @@ const arweave = Arweave.init({
 });
 
 // The data that you paid for but is missing in the network
-let missingData = fs.readFileSync(
-  "./myfile.mov"
-);
+let missingData = fs.readFileSync("./myfile.mov");
 
 // Get the tx headers from arweave.net/tx/{txid}
 let txHeaders = require("./txheaders.json");
@@ -458,7 +484,7 @@ for await (const uploader of arweave.transactions.upload(tx)) {
 efficient uploading of transactions of arbitrary size.
 
 ```ts
-import {pipeline} from "stream/promises";
+import { pipeline } from "stream/promises";
 
 const arweave = new Arweave(...)
 
@@ -476,17 +502,18 @@ await pipeline(createReadStream("./<path-to-file>"), uploadTransactionAsync(tx, 
 > Just like other blockchains (including Bitcoin and Ethereum), you should always ensure that your transaction has received enough block confirmations before you assume that the transaction has been fully accepted by the network.
 > We strongly advise that you check the status and number of confirmations for a given txid before using it, even if you have received a ‘200’ status response.
 ```js
-arweave.transactions.getStatus('bNbA3TEQVL60xlgCcqdz4ZPHFZ711cZ3hmkpGttDt_U').then(res => {
-    console.log(res);
-    // {
-    //  status: 200,
-    //  confirmed: {
-    //    block_height: 140151,
-    //    block_indep_hash: 'OR1wue3oBSg3XWvH0GBlauAtAjBICVs2F_8YLYQ3aoAR7q6_3fFeuBOw7d-JTEdR',
-    //    number_of_confirmations: 20
-    //  }
-    //}
-})
+arweave.transactions.getStatus("bNbA3TEQVL60xlgCcqdz4ZPHFZ711cZ3hmkpGttDt_U").then((res) => {
+  console.log(res);
+  // {
+  //  status: 200,
+  //  confirmed: {
+  //    block_height: 140151,
+  //    block_indep_hash: 'OR1wue3oBSg3XWvH0GBlauAtAjBICVs2F_8YLYQ3aoAR7q6_3fFeuBOw7d-JTEdR',
+  //    number_of_confirmations: 20
+  //  }
+  //}
+});
+
 ```
 
 #### Getting a transaction
@@ -496,29 +523,30 @@ Unlike `arweave-js` the returned data and tags are automatically decoded from ba
 >Due to how the API has evolved over time and with larger transaction support, the `data` field is no longer _guaranteed_ to be returned from the network as part of the transaction json, therefore, it is not recommended that you use this function for fetching data. You should use [`arweave.transactions.getData()`](#get-transaction-data) instead, as it will handle small transactions, as well as the reassembling of chunks for larger ones while benefiting from gateway optimisations.*
 
 ```js
-const transaction = arweave.transactions.get('hKMMPNh_emBf8v_at1tFzNYACisyMQNcKzeeE1QE9p8').then(transaction => {
+const transaction = arweave.transactions.get("hKMMPNh_emBf8v_at1tFzNYACisyMQNcKzeeE1QE9p8").then((transaction) => {
   console.log(transaction);
-    // Transaction {
-    //   'format': 1,
-    //   'id': 'hKMMPNh_emBf8v_at1tFzNYACisyMQNcKzeeE1QE9p8',
-    //   'last_tx': 'GW7p6NoGJ495tAoUjU5GLxIH52gqOgk5j78gQv3j0ebvldAlw6VgIUv_lrMNGI72',
-    //   'owner': 'warLaSbicZm1nx9ucf-_5i91CWgmNOcnFJfyJdloCtsbenBhLrcGH472kKTZyuEAp2lSKlZ0NFCT2r2z-0...',
-    //   'tags': [
-    //     {
-    //       'name': 'QXBwLU5hbWU',
-    //       'value': 'd2VpYm90LXNlYXJjaC13ZWlicw'
-    //     }
-    //   ],
-    //   'target': ',
-    //   'quantity': '0',
-    //   'data': 'iVBORw0KGgoAAAANSUhEUgAAArIAAADGCAYAAAAuVWN-AAAACXBIWXMAAAsSAAA...'
-    //   'data_size': '36795',
-    //   'data_tree': [],
-    //   'data_root': ',
-    //   'reward': '93077980',
-    //   'signature': 'RpohCHVl5vzGlG4R5ybeEuhs556Jv7rWOGaZCT69cpIei_j9b9sAetBlr0...'
-    // }
+  // Transaction {
+  //   'format': 1,
+  //   'id': 'hKMMPNh_emBf8v_at1tFzNYACisyMQNcKzeeE1QE9p8',
+  //   'last_tx': 'GW7p6NoGJ495tAoUjU5GLxIH52gqOgk5j78gQv3j0ebvldAlw6VgIUv_lrMNGI72',
+  //   'owner': 'warLaSbicZm1nx9ucf-_5i91CWgmNOcnFJfyJdloCtsbenBhLrcGH472kKTZyuEAp2lSKlZ0NFCT2r2z-0...',
+  //   'tags': [
+  //     {
+  //       'name': 'QXBwLU5hbWU',
+  //       'value': 'd2VpYm90LXNlYXJjaC13ZWlicw'
+  //     }
+  //   ],
+  //   'target': ',
+  //   'quantity': '0',
+  //   'data': 'iVBORw0KGgoAAAANSUhEUgAAArIAAADGCAYAAAAuVWN-AAAACXBIWXMAAAsSAAA...'
+  //   'data_size': '36795',
+  //   'data_tree': [],
+  //   'data_root': ',
+  //   'reward': '93077980',
+  //   'signature': 'RpohCHVl5vzGlG4R5ybeEuhs556Jv7rWOGaZCT69cpIei_j9b9sAetBlr0...'
+  // }
 });
+
 ```
 
 #### Getting transaction data
@@ -527,19 +555,19 @@ You can get the transaction data from a transaction ID without having to get the
 
 ```js
 // Get the base64url encoded string
-arweave.transactions.getData('bNbA3TEQVL60xlgCcqdz4ZPHFZ711cZ3hmkpGttDt_U').then(data => {
+arweave.transactions.getData("bNbA3TEQVL60xlgCcqdz4ZPHFZ711cZ3hmkpGttDt_U").then((data) => {
   console.log(data);
   // CjwhRE9DVFlQRSBodG1sPgo...
 });
 
 // Get the data decoded to a Uint8Array for binary data
-arweave.transactions.getData('bNbA3TEQVL60xlgCcqdz4ZPHFZ711cZ3hmkpGttDt_U', {decode: true}).then(data => {
+arweave.transactions.getData("bNbA3TEQVL60xlgCcqdz4ZPHFZ711cZ3hmkpGttDt_U", { decode: true }).then((data) => {
   console.log(data);
   // Uint8Array [10, 60, 33, 68, ...]
 });
 
 // Get the data decode as string data
-arweave.transactions.getData('bNbA3TEQVL60xlgCcqdz4ZPHFZ711cZ3hmkpGttDt_U', {decode: true, string: true}).then(data => {
+arweave.transactions.getData("bNbA3TEQVL60xlgCcqdz4ZPHFZ711cZ3hmkpGttDt_U", { decode: true, string: true }).then((data) => {
   console.log(data);
   // <!DOCTYPE HTML>...
 });
@@ -550,13 +578,13 @@ arweave.transactions.getData('bNbA3TEQVL60xlgCcqdz4ZPHFZ711cZ3hmkpGttDt_U', {dec
 Unlike `arweave-js`, tags are automatically decoded:
 
 ```js
-  const transaction = arweave.transactions.get("bNbA3TEQVL60xlgCcqdz4ZPHFZ711cZ3hmkpGttDt_U").then((transaction) => {
-    transaction["tags"].forEach(({ name, value }) => {
-      console.log(`${name} : ${value}`);
-    });
-    // Content-Type : text/html
-    // User-Agent : ArweaveDeploy/1.1.0
+const transaction = arweave.transactions.get("bNbA3TEQVL60xlgCcqdz4ZPHFZ711cZ3hmkpGttDt_U").then((transaction) => {
+  transaction["tags"].forEach(({ name, value }) => {
+    console.log(`${name} : ${value}`);
   });
+  // Content-Type : text/html
+  // User-Agent : ArweaveDeploy/1.1.0
+});
 ```
 
 ### Blocks
@@ -571,8 +599,8 @@ a list of zero to many transactions.
 Gets block data for given independent hash. 
 
 ```js
-const result = await arweave.blocks.getByHash("zbUPQFA4ybnd8h99KI9Iqh4mogXJibr0syEwuJPrFHhOhld7XBMOUDeXfsIGvYDp"); 
-console.log(result)
+const result = await arweave.blocks.getByHash("zbUPQFA4ybnd8h99KI9Iqh4mogXJibr0syEwuJPrFHhOhld7XBMOUDeXfsIGvYDp");
+console.log(result);
 // {
 //   "nonce": "6jdzO4FzS4EVaQVcLBEmxm6uN5-1tqBXW24Pzp6JsRQ",
 //   "previous_block": "iNgEv6vf9nIrxLWeEu-vPNHFftEh0kfOnx0qd6NKUOc8Z3WeMeOmAmdOHwSUFAGn",
@@ -588,8 +616,8 @@ console.log(result)
 #### Getting block by height
 
 ```js
-const result = await arweave.blocks.getByHeight(711150); 
-console.log(result)
+const result = await arweave.blocks.getByHeight(711150);
+console.log(result);
 // {
 //   "nonce": "6jdzO4FzS4EVaQVcLBEmxm6uN5-1tqBXW24Pzp6JsRQ",
 //   "previous_block": "iNgEv6vf9nIrxLWeEu-vPNHFftEh0kfOnx0qd6NKUOc8Z3WeMeOmAmdOHwSUFAGn",
@@ -606,12 +634,12 @@ console.log(result)
 #### Getting current block
 Gets a block data for current block, i.e., block with indep_hash:
 ```js
-const {current} = await arweave.network.getInfo();
+const { current } = await arweave.network.getInfo();
 ```
 
 ```js
-const result = await arweave.blocks.getCurrent(); 
-console.log(result)
+const result = await arweave.blocks.getCurrent();
+console.log(result);
 // {
 //   "indep_hash": "qoJwHSpzl6Ouo140HW2DTv1rGOrgfBEnHi5sHv-fJt_TsK7xA70F2QbjMCopLiMd",
 //   ...
