@@ -319,17 +319,7 @@ export class Merkle {
 }
 
 export function arrayFlatten<T = any>(input: T[]): T[] {
-  const flat: any[] = [];
-
-  input.forEach((item) => {
-    if (Array.isArray(item)) {
-      flat.push(...arrayFlatten(item));
-    } else {
-      flat.push(item);
-    }
-  });
-
-  return flat;
+  return input.flat(Infinity) as T[];
 }
 
 export function intToBuffer(note: number): Uint8Array {
