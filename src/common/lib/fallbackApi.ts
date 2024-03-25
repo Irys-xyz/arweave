@@ -76,7 +76,10 @@ export class FallbackApi {
       } catch (e: any) {
         onFallback?.(e, apiInstance);
         errors.push(e);
-        if (attempts >= maxAttempts) throw e;
+        if (attempts >= maxAttempts) {
+          if (e?.response?.status) return e.response;
+          throw e;
+        }
       }
     }
 
