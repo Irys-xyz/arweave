@@ -1,6 +1,6 @@
 {
   "name": "@irys/arweave",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "repository": "https://github.com/Bundlr-Network/arweave",
   "author": "JesseTheRobot <jesse@bundlr.network>",
   "license": "MIT",
@@ -69,7 +69,7 @@
         "default": "./build/esm/esmIndex.js"
       }
     },
-    "./any/*": {
+    "./*": {
       "types": "./*.d.ts",
       "default": "./*.js"
     }
